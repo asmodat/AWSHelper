@@ -54,11 +54,11 @@ namespace AWSHelper.ECS
             responses.EnsureSuccess();
         }
 
-        public async Task StopTasksAsync(IEnumerable<string> arns)
+        public async Task StopTasksAsync(IEnumerable<string> arns, string cluster)
         {
             var responses = await arns.ForEachAsync(arn =>
                 _ECSClient.StopTaskAsync(
-                    new Amazon.ECS.Model.StopTaskRequest() { Task = arn }),
+                    new Amazon.ECS.Model.StopTaskRequest() { Task = arn, Cluster = cluster }),
                     _maxDegreeOfParalelism
             );
 

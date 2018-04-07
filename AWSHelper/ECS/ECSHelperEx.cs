@@ -7,6 +7,7 @@ using Amazon.ECS;
 using AsmodatStandard.Extensions;
 using AsmodatStandard.Threading;
 using AsmodatStandard.Extensions.Collections;
+using AsmodatStandard.Types;
 
 namespace AWSHelper.ECS
 {
@@ -47,13 +48,44 @@ namespace AWSHelper.ECS
             var tasks = await ecs.ListTasksAsync(service.Cluster, service.ARN);
             await ecs.UpdateServiceAsync(desiredCount: 0, arns: service.ARN, cluster: service.Cluster);
             await ecs.DeleteServiceAsync(cluster: service.Cluster, arns: service.ARN);
-            await ecs.StopTasksAsync(tasks);
+            await ecs.StopTasksAsync(arns: tasks, cluster: service.Cluster);
         }
 
         public static async Task DestroyTaskDefinitions(this ECSHelper ecs, string familyPrefix)
         {
             var tasks = await ecs.ListTaskDefinitionsAsync(familyPrefix);
             await ecs.DeregisterTaskDefinitionsAsync(tasks);
+        }
+
+        public static async Task WaitForServiceToStart(this ECSHelper ecs, string cluster, string serviceName, int timeout)
+        {
+            var services = await ((cluster.IsNullOrEmpty()) ? ecs.ListServicesAsync() : ecs.ListServicesAsync(cluster));
+
+            services = services.Where(x => ((serviceName.StartsWith("arn:")) ? x.ARN == serviceName : x.ARN.EndsWith($":service/{serviceName}")));
+
+            if (services?.Count() != 1)
+                throw new Exception($"Could not find service '{serviceName}' for cluster: '{cluster}' or found more then one matching result (In such case use ARN insted of serviceName, or specify cluster) [{services?.Count()}].");
+
+            var service = services.First();
+
+            var tt = new TickTimeout(timeout, TickTime.Unit.s, Enabled: true);
+            while (!tt.IsTriggered)
+            {
+                var serviceDescription = await ecs.DescribeServicesAsync(service.Cluster, new string[] { service.ARN });
+
+                if (serviceDescription.IsNullOrEmpty())
+                    throw new Exception($"Could not find or describe service: '{service.ARN}' for the cluster '{service.Cluster}'.");
+
+                var result = serviceDescription.First();
+
+                if (result.DesiredCount == result.RunningCount)
+                    return; //desired count reached
+
+                if (result.PendingCount != 0)
+                    await Task.Delay(1000);
+            }
+
+            throw new Exception($"Timeout '{timeout}' [s], service: '{service.ARN}' could not reach its desired count in time.");
         }
     }
 }

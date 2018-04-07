@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using AsmodatStandard.Extensions;
 using AWSHelper.CloudWatch;
@@ -28,12 +29,14 @@ namespace AWSHelper
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Started AWSHelper v0.1 by Asmodat");
+            Console.WriteLine("*** Started AWSHelper v0.2 by Asmodat ***");
 
-            if (args.Length == 0)
-                throw new Exception("Arguments were not specified.");
-
+            if (args.Length == 2)
+                throw new Exception("At least 2 arguments must be specified.");
+            
             var nArgs = GetNamedArguments(args);
+
+            Console.WriteLine($"Executing command: '{args[0]} {args[1]}' Arguments: \n{nArgs.JsonSerialize(Newtonsoft.Json.Formatting.Indented)}\n");
 
             if (args[0] == "ecs")
             {
@@ -48,6 +51,12 @@ namespace AWSHelper
                         ; break;
                     case "destroy-task-definitions":
                         helper.DestroyTaskDefinitions(nArgs["family"]).Wait();
+                        ; break;
+                    case "await-service-start":
+                        helper.WaitForServiceToStart(
+                            nArgs.FirstOrDefault(x => x.Key == "cluster").Value, //optional
+                            nArgs["service"],
+                            nArgs["timeout"].ToInt32()).Wait();
                         ; break;
                     default: throw new Exception($"Unknown ECS command: '{args[1]}'");
                 }

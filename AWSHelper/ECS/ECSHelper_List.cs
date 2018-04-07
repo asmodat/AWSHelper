@@ -120,5 +120,21 @@ namespace AWSHelper.ECS
             response.EnsureSuccess();
             return list;
         }
+
+        public async Task<IEnumerable<Amazon.ECS.Model.Service>> DescribeServicesAsync(string cluster, IEnumerable<string> services = null)
+        {
+            if (services != null && services.Count() > 10)
+                throw new ArgumentException($"DescribeServicesAsync failed, no more then 10 services lookup allowed, but was: '{services?.Count()}'.");
+
+            var response = await _ECSClient.DescribeServicesAsync(
+                new Amazon.ECS.Model.DescribeServicesRequest()
+                {
+                    Cluster = cluster,
+                    Services = services?.ToList()
+                });
+
+            response.EnsureSuccess();
+            return response.Services;
+        }
     }
 }
