@@ -6,6 +6,7 @@ using AsmodatStandard.Extensions;
 using AWSHelper.CloudWatch;
 using AWSHelper.ECS;
 using AWSHelper.ELB;
+using AWSHelper.Route53;
 
 namespace AWSHelper
 {
@@ -40,8 +41,7 @@ namespace AWSHelper
 
             if (args[0] == "ecs")
             {
-                ECSHelper helper = new ECSHelper();
-
+                var helper = new ECSHelper();
                 switch (args[1])
                 {
                     case "destroy-service":
@@ -63,7 +63,7 @@ namespace AWSHelper
             }
             else if (args[0] == "elb")
             {
-                ELBHelper helper = new ELBHelper();
+                var helper = new ELBHelper();
                 switch (args[1])
                 {
                     case "destroy-load-balancer":
@@ -74,13 +74,25 @@ namespace AWSHelper
             }
             else if (args[0] == "cloud-watch")
             {
-                CloudWatchHelper helper = new CloudWatchHelper();
+                var helper = new CloudWatchHelper();
                 switch (args[1])
                 {
                     case "destroy-log-group":
                         helper.DeleteLogGroupAsync(nArgs["name"]).Wait();
                         ; break;
                     default: throw new Exception($"Unknown CloudWatch command: '{args[1]}'");
+                }
+            }
+            else if (args[0] == "route53")
+            {
+
+                var helper = new Route53Helper();
+                switch (args[1])
+                {
+                    case "destroy-record":
+                        helper.DestroyRecord(zoneId: nArgs["zone"], recordName: nArgs["name"], recordType: nArgs["type"]).Wait();
+                        ; break;
+                    default: throw new Exception($"Unknown Route53 command: '{args[1]}'");
                 }
             }
             else
