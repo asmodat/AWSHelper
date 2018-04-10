@@ -12,7 +12,7 @@ namespace AWSHelper.Route53
 {
     public static class Route53HelperEx
     {
-        public static async Task DestroyRecord(this Route53Helper r53h, string zoneId, string recordName, string recordType)
+        public static async Task<Amazon.Route53.Model.ResourceRecordSet> GetRecordSet(this Route53Helper r53h, string zoneId, string recordName, string recordType)
         {
             var set = await r53h.ListResourceRecordSetsAsync(zoneId);
             set = set?.Where(x => x.Name == recordName && x.Type == recordType);
@@ -20,7 +20,10 @@ namespace AWSHelper.Route53
             if (set?.Count() != 1)
                 throw new Exception($"DestroyRecord Failed, RecordSet with Name: '{recordName}' and Type: '{recordType}' was not found, or more then one was found. [{set?.Count()}]");
 
-            await r53h.ChangeResourceRecordSetsAsync(zoneId, set.First());
+            return set.First();
         }
+
+        public static async Task DestroyRecord(this Route53Helper r53h, string zoneId, string recordName, string recordType)
+            => await r53h.ChangeResourceRecordSetsAsync(zoneId, await r53h.GetRecordSet(zoneId, recordName, recordType));
     }
 }

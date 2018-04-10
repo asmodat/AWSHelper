@@ -85,7 +85,6 @@ namespace AWSHelper
             }
             else if (args[0] == "route53")
             {
-
                 var helper = new Route53Helper();
                 switch (args[1])
                 {
@@ -93,6 +92,19 @@ namespace AWSHelper
                         helper.DestroyRecord(zoneId: nArgs["zone"], recordName: nArgs["name"], recordType: nArgs["type"]).Wait();
                         ; break;
                     default: throw new Exception($"Unknown Route53 command: '{args[1]}'");
+                }
+            }
+            else if (args[0] == "test")
+            { 
+                switch (args[1])
+                {
+                    case "curl-get":
+                        TestHelper.AwaitSuccessCurlGET(
+                            uri: nArgs["uri"], 
+                            timeout: nArgs["timeout"].ToInt32(), 
+                            intensity: nArgs.FirstOrDefault(x => x.Key == "intensity").Value.ToIntOrDefault(1000)).Wait();
+                        ; break;
+                    default: throw new Exception($"Unknown test command: '{args[1]}'");
                 }
             }
             else
