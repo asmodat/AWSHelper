@@ -20,6 +20,6 @@ cd ../win-x64/
 
 zip -r ../$app_name-win-x64.zip *
 
-cd $PWD
+cd "$current_dir"
 
 echo "Publish DONE"

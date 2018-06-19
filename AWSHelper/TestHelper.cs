@@ -1,14 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Amazon;
-using Amazon.ElasticLoadBalancing;
-using Amazon.ElasticLoadBalancingV2;
 using AsmodatStandard.Extensions;
-using AsmodatStandard.Threading;
 using AsmodatStandard.Extensions.Collections;
-using AWSHelper.Extensions;
 using System.Net.Http;
 using AsmodatStandard.Types;
 
@@ -18,15 +11,26 @@ namespace AWSHelper
     {
         public static async Task AwaitSuccessCurlGET(string uri, int timeout, int intensity = 1000)
         {
+            if (uri.IsNullOrEmpty())
+                throw new ArgumentException($"{nameof(uri)} can't be null or empty.");
+
             var tt = new TickTimeout(timeout, TickTime.Unit.ms);
             HttpResponseMessage lastResponse = null;
+            Exception lastException = null;
             do
             {
-                var result = (await HttpHelper.CURL(HttpMethod.Get, uri, null));
-                lastResponse = result.Response;
+                try
+                {
+                    var result = (await HttpHelper.CURL(HttpMethod.Get, uri, null));
+                    lastResponse = result.Response;
 
-                if (lastResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                    return;
+                    if (lastResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                        return;
+                }
+                catch(Exception ex)
+                {
+                    lastException = ex;
+                }
 
                 if (tt.IsTriggered)
                     break;
@@ -35,7 +39,7 @@ namespace AWSHelper
 
             } while (tt.IsTriggered);
 
-            throw new Exception($"AwaitSuccessCurlGET, status code: '{lastResponse?.StatusCode}', response: '{lastResponse?.Content?.ReadAsStringAsync()}'");
+            throw new Exception($"AwaitSuccessCurlGET, status code: '{lastResponse?.StatusCode}', response: '{lastResponse?.Content?.ReadAsStringAsync()}'", lastException);
         }
     }
 }

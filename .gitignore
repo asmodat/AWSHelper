@@ -2,3 +2,4 @@ AWSHelper/obj/
 AWSHelper/bin/
 AWSHelper/Properties/launchSettings.json
 .vs/
+*.zip

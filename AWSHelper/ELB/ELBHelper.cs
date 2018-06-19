@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Amazon;
 using Amazon.ElasticLoadBalancing;
 using Amazon.ElasticLoadBalancingV2;
-using AsmodatStandard.Extensions;
 using AsmodatStandard.Threading;
-using AsmodatStandard.Extensions.Collections;
 using AWSHelper.Extensions;
 
 namespace AWSHelper.ELB
@@ -25,37 +20,22 @@ namespace AWSHelper.ELB
             _clientV2 = new AmazonElasticLoadBalancingV2Client();
         }
 
-        public async Task DeleteListenersAsync(IEnumerable<string> arns)
-        {
-            var responses = await arns.ForEachAsync(arn =>
-                _clientV2.DeleteListenerAsync(
+        public Task DeleteListenersAsync(IEnumerable<string> arns) => arns.ForEachAsync(
+            arn => _clientV2.DeleteListenerAsync(
                     new Amazon.ElasticLoadBalancingV2.Model.DeleteListenerRequest() { ListenerArn = arn }),
                     _maxDegreeOfParalelism
-            );
+            ).EnsureSuccess();
 
-            responses.EnsureSuccess();
-        }
-
-        public async Task DeleteTargetGroupsAsync(IEnumerable<string> arns)
-        {
-            var responses = await arns.ForEachAsync(arn =>
+        public Task DeleteTargetGroupsAsync(IEnumerable<string> arns) => arns.ForEachAsync(arn =>
                 _clientV2.DeleteTargetGroupAsync(
-                    new Amazon.ElasticLoadBalancingV2.Model.DeleteTargetGroupRequest() { TargetGroupArn = arn}),
+                    new Amazon.ElasticLoadBalancingV2.Model.DeleteTargetGroupRequest() { TargetGroupArn = arn }),
                     _maxDegreeOfParalelism
-            );
+            ).EnsureSuccess();
 
-            responses.EnsureSuccess();
-        }
-
-        public async Task DeleteLoadBalancersAsync(IEnumerable<string> arns)
-        {
-            var responses = await arns.ForEachAsync(arn =>
-                _clientV2.DeleteLoadBalancerAsync(
+        public Task DeleteLoadBalancersAsync(IEnumerable<string> arns) => arns.ForEachAsync(
+            arn => _clientV2.DeleteLoadBalancerAsync(
                     new Amazon.ElasticLoadBalancingV2.Model.DeleteLoadBalancerRequest() { LoadBalancerArn = arn }),
                     _maxDegreeOfParalelism
-            );
-
-            responses.EnsureSuccess();
-        }
+            ).EnsureSuccess();
     }
 }

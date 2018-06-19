@@ -24,6 +24,6 @@ namespace AWSHelper.Route53
         }
 
         public static async Task DestroyRecord(this Route53Helper r53h, string zoneId, string recordName, string recordType)
-            => await r53h.ChangeResourceRecordSetsAsync(zoneId, await r53h.GetRecordSet(zoneId, recordName, recordType));
+            => await r53h.DeleteResourceRecordSetsAsync(zoneId, await r53h.GetRecordSet(zoneId, recordName, recordType));
     }
 }

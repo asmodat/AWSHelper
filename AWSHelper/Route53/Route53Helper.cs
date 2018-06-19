@@ -16,25 +16,26 @@ namespace AWSHelper.Route53
             _client = new AmazonRoute53Client();
         }
 
-        public async Task ChangeResourceRecordSetsAsync(string zoneId, Amazon.Route53.Model.ResourceRecordSet resourceRecordSet)
-        {
-            var change = new Amazon.Route53.Model.Change()
-            {
-                Action = new ChangeAction(ChangeAction.DELETE),
-                ResourceRecordSet = resourceRecordSet
-            };
-
-            var response = await _client.ChangeResourceRecordSetsAsync(
-                     new Amazon.Route53.Model.ChangeResourceRecordSetsRequest() {
-                         ChangeBatch = new Amazon.Route53.Model.ChangeBatch() {
+        public Task ChangeResourceRecordSetsAsync(
+            string zoneId,
+            Amazon.Route53.Model.ResourceRecordSet resourceRecordSet,
+            Amazon.Route53.Model.Change change) => _client.ChangeResourceRecordSetsAsync(
+                     new Amazon.Route53.Model.ChangeResourceRecordSetsRequest()
+                     {
+                         ChangeBatch = new Amazon.Route53.Model.ChangeBatch()
+                         {
                              Changes = new List<Amazon.Route53.Model.Change>() {
                                  change
                              }
                          },
                          HostedZoneId = zoneId
-                     });
+                     }).EnsureSuccessAsync();
 
-            response.EnsureSuccess();
-        }
+        public Task DeleteResourceRecordSetsAsync(string zoneId, Amazon.Route53.Model.ResourceRecordSet resourceRecordSet)
+            => ChangeResourceRecordSetsAsync(zoneId, resourceRecordSet, new Amazon.Route53.Model.Change()
+            {
+                Action = new ChangeAction(ChangeAction.DELETE),
+                ResourceRecordSet = resourceRecordSet
+            });
     }
 }
