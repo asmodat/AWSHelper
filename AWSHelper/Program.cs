@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using AsmodatStandard.Extensions;
 using AWSHelper.CloudWatch;
 using AWSHelper.ECS;
 using AWSHelper.ELB;
 using AWSHelper.Route53;
+using AWSHelper.ECR;
 
 namespace AWSHelper
 {
-    class Program
+    public partial class Program
     {
         private static Dictionary<string, string> GetNamedArguments(string[] args)
         {
@@ -34,81 +34,34 @@ namespace AWSHelper
 
             if (args.Length == 2)
                 throw new Exception("At least 2 arguments must be specified.");
-            
+
             var nArgs = GetNamedArguments(args);
 
             Console.WriteLine($"Executing command: '{args[0]} {args[1]}' Arguments: \n{nArgs.JsonSerialize(Newtonsoft.Json.Formatting.Indented)}\n");
 
-            if (args[0] == "ecs")
+            switch (args[0])
             {
-                var helper = new ECSHelper();
-                switch (args[1])
-                {
-                    case "destroy-service":
-                        helper.DestroyService(
-                            nArgs.FirstOrDefault(x => x.Key == "cluster").Value, //optional
-                            nArgs["service"]).Wait();
-                        ; break;
-                    case "destroy-task-definitions":
-                        helper.DestroyTaskDefinitions(nArgs["family"]).Wait();
-                        ; break;
-                    case "await-service-start":
-                        helper.WaitForServiceToStart(
-                            nArgs.FirstOrDefault(x => x.Key == "cluster").Value, //optional
-                            nArgs["service"],
-                            nArgs["timeout"].ToInt32()).Wait();
-                        ; break;
-                    default: throw new Exception($"Unknown ECS command: '{args[1]}'");
-                }
+                case "ecs":
+                    executeECS(args);
+                    break;
+                case "ecr":
+                    executeECR(args);
+                    break;
+                case "elb":
+                    executeELB(args);
+                    break;
+                case "cloud-watch":
+                    executeCW(args);
+                    break;
+                case "route53":
+                    executeR53(args);
+                    break;
+                case "test":
+                    executeCURL(args);
+                    break;
+                default:
+                    throw new Exception($"Unknown command: '{args[0]}'");
             }
-            else if (args[0] == "elb")
-            {
-                var helper = new ELBHelper();
-                switch (args[1])
-                {
-                    case "destroy-load-balancer":
-                        helper.DestroyLoadBalancer(nArgs["name"]).Wait();
-                        ; break;
-                    default: throw new Exception($"Unknown ELB command: '{args[1]}'");
-                }
-            }
-            else if (args[0] == "cloud-watch")
-            {
-                var helper = new CloudWatchHelper();
-                switch (args[1])
-                {
-                    case "destroy-log-group":
-                        helper.DeleteLogGroupAsync(nArgs["name"]).Wait();
-                        ; break;
-                    default: throw new Exception($"Unknown CloudWatch command: '{args[1]}'");
-                }
-            }
-            else if (args[0] == "route53")
-            {
-                var helper = new Route53Helper();
-                switch (args[1])
-                {
-                    case "destroy-record":
-                        helper.DestroyRecord(zoneId: nArgs["zone"], recordName: nArgs["name"], recordType: nArgs["type"]).Wait();
-                        ; break;
-                    default: throw new Exception($"Unknown Route53 command: '{args[1]}'");
-                }
-            }
-            else if (args[0] == "test")
-            { 
-                switch (args[1])
-                {
-                    case "curl-get":
-                        TestHelper.AwaitSuccessCurlGET(
-                            uri: nArgs["uri"], 
-                            timeout: nArgs["timeout"].ToInt32(), 
-                            intensity: nArgs.FirstOrDefault(x => x.Key == "intensity").Value.ToIntOrDefault(1000)).Wait();
-                        ; break;
-                    default: throw new Exception($"Unknown test command: '{args[1]}'");
-                }
-            }
-            else
-                throw new Exception($"Unknown command: '{args[0]}'");
 
             Console.WriteLine("Success");
         }

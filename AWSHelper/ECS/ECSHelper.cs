@@ -20,27 +20,20 @@ namespace AWSHelper.ECS
         public Task DeregisterTaskDefinitionsAsync(IEnumerable<string> arns) => arns.ForEachAsync(
             arn => _ECSClient.DeregisterTaskDefinitionAsync(
                     new Amazon.ECS.Model.DeregisterTaskDefinitionRequest() { TaskDefinition = arn }),
-                    _maxDegreeOfParalelism
-            ).EnsureSuccess();
-
+                    _maxDegreeOfParalelism).EnsureSuccess();
 
         public Task UpdateServicesAsync(IEnumerable<string> arns, int desiredCount, string cluster) => arns.ForEachAsync(
             arn => _ECSClient.UpdateServiceAsync(
                     new Amazon.ECS.Model.UpdateServiceRequest() { Service = arn, DesiredCount = desiredCount, Cluster = cluster }),
-                    _maxDegreeOfParalelism
-            ).EnsureSuccess();
-
+                    _maxDegreeOfParalelism).EnsureSuccess();
 
         public Task DeleteServicesAsync(IEnumerable<string> arns, string cluster) => arns.ForEachAsync(
             arn => _ECSClient.DeleteServiceAsync(new Amazon.ECS.Model.DeleteServiceRequest() { Service = arn, Cluster = cluster }),
-                    _maxDegreeOfParalelism
-            ).EnsureSuccess();
-
+                    _maxDegreeOfParalelism).EnsureSuccess();
 
         public Task StopTasksAsync(IEnumerable<string> arns, string cluster) => arns.ForEachAsync(arn =>
                 _ECSClient.StopTaskAsync(
                     new Amazon.ECS.Model.StopTaskRequest() { Task = arn, Cluster = cluster }),
-                    _maxDegreeOfParalelism
-            ).EnsureSuccess();
+                    _maxDegreeOfParalelism).EnsureSuccess();
     }
 }
