@@ -5,6 +5,11 @@ Set variable or Enviroment Variable of $AWSHelper into: /drive/some/path/AWSHelp
 
 Then you can execute in bash shell with single command:
 
+Displaying Help Info:
+dotnet $AWSHelper help
+
+Examples:
+
 Deleting Service:
 dotnet $AWSHelper ecs destroy-service --service="service-name"
 
