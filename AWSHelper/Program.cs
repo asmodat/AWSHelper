@@ -26,9 +26,9 @@ namespace AWSHelper
 
         static void Main(string[] args)
         {
-            Console.WriteLine("*** Started AWSHelper v0.3 by Asmodat ***");
+            Console.WriteLine("*** Started AWSHelper v0.3.1 by Asmodat ***");
 
-            if (args.Length <= 1)
+            if (args.Length < 1)
             {
                 Console.WriteLine("Try 'help' to find out list of available commands.");
                 throw new Exception("At least 1 argument must be specified.");
@@ -36,7 +36,8 @@ namespace AWSHelper
 
             var nArgs = GetNamedArguments(args);
 
-            Console.WriteLine($"Executing command: '{args[0]} {args[1]}' Arguments: \n{nArgs.JsonSerialize(Newtonsoft.Json.Formatting.Indented)}\n");
+            if (args.Length > 1)
+                Console.WriteLine($"Executing command: '{args[0]} {args[1]}' Arguments: \n{nArgs.JsonSerialize(Newtonsoft.Json.Formatting.Indented)}\n");
 
             switch (args[0])
             {
