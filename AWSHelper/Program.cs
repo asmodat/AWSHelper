@@ -2,11 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using AsmodatStandard.Extensions;
-using AWSHelper.CloudWatch;
-using AWSHelper.ECS;
-using AWSHelper.ELB;
-using AWSHelper.Route53;
-using AWSHelper.ECR;
+using AsmodatStandard.Extensions.Collections;
 
 namespace AWSHelper
 {
@@ -30,10 +26,13 @@ namespace AWSHelper
 
         static void Main(string[] args)
         {
-            Console.WriteLine("*** Started AWSHelper v0.2 by Asmodat ***");
+            Console.WriteLine("*** Started AWSHelper v0.3 by Asmodat ***");
 
-            if (args.Length == 2)
-                throw new Exception("At least 2 arguments must be specified.");
+            if (args.Length <= 1)
+            {
+                Console.WriteLine("Try 'help' to find out list of available commands.");
+                throw new Exception("At least 1 argument must be specified.");
+            }
 
             var nArgs = GetNamedArguments(args);
 
@@ -59,11 +58,50 @@ namespace AWSHelper
                 case "test":
                     executeCURL(args);
                     break;
+                case "help":
+                case "--help":
+                case "-help":
+                case "-h":
+                case "h":
+                    HelpPrinter($"{args[0]}", "AWSHelper List of available commands",
+                    ("ecs", "Accepts params: destroy-service, destroy-task-definitions, await-service-start"),
+                    ("ecr", "Accepts params: retag, delete, help"),
+                    ("elb", "Accepts params: destroy-load-balancer"),
+                    ("cloud-watch", "Accepts params: destroy-log-group"),
+                    ("route53", "Accepts params: destroy-record"),
+                    ("test", "Accepts params: curl-get"),
+                    ("[flags]", "Allowed Syntax: key=value, --key=value"));
+                    break;
                 default:
-                    throw new Exception($"Unknown command: '{args[0]}'");
+                    {
+                        Console.WriteLine("Try 'help' to find out list of available commands.");
+                        throw new Exception($"Unknown command: '{args[0]}'.");
+                    }
             }
 
             Console.WriteLine("Success");
+        }
+
+        private static void HelpPrinter(string cmd, string description, params (string param, string descritpion)[] args)
+        {
+            Console.WriteLine($"### HELP: {cmd}");
+            Console.WriteLine($"### DESCRIPTION: ");
+            Console.WriteLine($"{description}");
+
+            if (!args.IsNullOrEmpty())
+            {
+                Console.WriteLine($"### OPTIONS");
+                for (int i = 0; i < args.Length; i++)
+                {
+                    var arg = args[i];
+                    Console.WriteLine($"### Option-{(i + 1)}: {arg.param}");
+
+                    if (!arg.descritpion.IsNullOrEmpty())
+                        Console.WriteLine($"{arg.descritpion}");
+                }
+            }
+
+            Console.WriteLine($"### HELP: {cmd}");
         }
     }
 }
