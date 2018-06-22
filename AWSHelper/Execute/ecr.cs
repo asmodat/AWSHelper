@@ -1,5 +1,7 @@
 ﻿using System;
 using AWSHelper.ECR;
+using AsmodatStandard.Extensions;
+using System.Linq;
 
 namespace AWSHelper
 {
@@ -12,6 +14,15 @@ namespace AWSHelper
             var helper = new ECRHelper();
             switch (args[1])
             {
+                case "list-images-by-tag":
+                    Console.WriteLine($"{(helper.GetImagesByTag(imageTag: nArgs["imageTag"], registryId: nArgs["registryId"], repositoryName: nArgs["repositoryName"]).Result.Select(x => x.ImageId).JsonSerialize(Newtonsoft.Json.Formatting.Indented))}");
+                    ; break;
+                case "list-tagged-images":
+                    Console.WriteLine($"{(helper.ListTaggedImages(registryId: nArgs["registryId"], repositoryName: nArgs["repositoryName"]).Result.JsonSerialize(Newtonsoft.Json.Formatting.Indented))}");
+                    ; break;
+                case "list-untagged-images":
+                    Console.WriteLine($"{(helper.ListUntaggedImages(registryId: nArgs["registryId"], repositoryName: nArgs["repositoryName"]).Result.JsonSerialize(Newtonsoft.Json.Formatting.Indented))}");
+                    ; break;
                 case "retag":
                     helper.RetagImageAsync(
                         imageTag: nArgs["imageTag"],
@@ -26,6 +37,9 @@ namespace AWSHelper
                         repositoryName: nArgs["repositoryName"]).Wait();
                     ; break;
                 case "help": HelpPrinter($"{args[0]}", "Amazon Elastic Container Registry",
+                    ("list-images-by-tag", "Accepts params: imageTag, imageTagNew, registryId, repositoryName"),
+                    ("list-tagged-images", "Accepts params: imageTagNew, registryId, repositoryName"),
+                    ("list-untagged-images", "Accepts params: imageTagNew, registryId, repositoryName"),
                     ("retag", "Accepts params: imageTag, imageTagNew, registryId, repositoryName"),
                     ("delete", "Accepts params: imageTag, registryId, repositoryName"));
                     break;

@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="install.sh" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AWSSDK.AutoScaling" Version="3.3.4.3" />
     <PackageReference Include="AWSSDK.AutoScalingPlans" Version="3.3.0.4" />
     <PackageReference Include="AWSSDK.CloudFormation" Version="3.3.10" />
