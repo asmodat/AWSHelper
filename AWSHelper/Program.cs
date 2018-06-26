@@ -40,9 +40,10 @@ namespace AWSHelper
             if (args.Length > 1)
                 Console.WriteLine($"Executing command: '{args[0]} {args[1]}' Arguments: \n{nArgs.JsonSerialize(Newtonsoft.Json.Formatting.Indented)}\n");
 
-            if (nArgs.ContainsKey("executon-mode"))
+            string executionMode;
+            if (nArgs.ContainsKey("execution-mode") && 
+                !(executionMode = nArgs["executon-mode"]).IsNullOrEmpty())
             {
-                var executionMode = nArgs["executon-mode"];
                 if (executionMode == "debug")
                 {
                     Execute(args);
@@ -59,7 +60,7 @@ namespace AWSHelper
                     }
                 }
                 else
-                    throw new Exception($"[{TickTime.Now.ToLongDateTimeString()}] Unknown execution-mode: '{executionMode}'");
+                    throw new Exception($"[{TickTime.Now.ToLongDateTimeString()}] Unknown execution-mode: '{executionMode}', try: 'debug' or 'silent-errors'.");
             }
             else
             {
