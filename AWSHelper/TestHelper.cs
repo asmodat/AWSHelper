@@ -32,14 +32,12 @@ namespace AWSHelper
                     lastException = ex;
                 }
 
-                if (tt.IsTriggered)
-                    break;
-
-                await Task.Delay(intensity);
+                if (!tt.IsTriggered)
+                    await Task.Delay(intensity);
 
             } while (tt.IsTriggered);
 
-            throw new Exception($"AwaitSuccessCurlGET, status code: '{lastResponse?.StatusCode}', response: '{lastResponse?.Content?.ReadAsStringAsync()}'", lastException);
+            throw new Exception($"AwaitSuccessCurlGET, span: {(int)tt.Span}/{timeout} [ms], status code: '{lastResponse?.StatusCode}', response: '{lastResponse?.Content?.ReadAsStringAsync()}'", lastException);
         }
     }
 }

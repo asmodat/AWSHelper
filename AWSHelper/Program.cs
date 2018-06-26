@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AsmodatStandard.Extensions;
 using AsmodatStandard.Extensions.Collections;
+using AsmodatStandard.Types;
 
 namespace AWSHelper
 {
@@ -26,7 +27,7 @@ namespace AWSHelper
 
         static void Main(string[] args)
         {
-            Console.WriteLine("*** Started AWSHelper v0.3.2 by Asmodat ***");
+            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.3.2 by Asmodat ***");
 
             if (args.Length < 1)
             {
@@ -42,7 +43,11 @@ namespace AWSHelper
             if (nArgs.ContainsKey("executon-mode"))
             {
                 var executionMode = nArgs["executon-mode"];
-                if (executionMode == "silent-errors")
+                if (executionMode == "debug")
+                {
+                    Execute(args);
+                }
+                else if (executionMode == "silent-errors")
                 {
                     try
                     {
@@ -50,18 +55,26 @@ namespace AWSHelper
                     }
                     catch(Exception ex)
                     {
-                        Console.WriteLine($"Execution Failed With Error Message: {ex.JsonSerializeAsPrettyException()}");
+                        Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Failure, Error Message: {ex.JsonSerializeAsPrettyException()}");
                     }
                 }
                 else
-                    throw new Exception($"Unknown execution-mode: '{executionMode}'");
+                    throw new Exception($"[{TickTime.Now.ToLongDateTimeString()}] Unknown execution-mode: '{executionMode}'");
             }
             else
             {
-                Execute(args);
+                try
+                {
+                    Execute(args);
+                }
+                catch
+                {
+                    Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Failure");
+                    throw;
+                }
             }
 
-            Console.WriteLine("Success");
+            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Success");
         }
 
         private static void Execute(string[] args)
