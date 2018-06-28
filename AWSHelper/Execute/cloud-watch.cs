@@ -1,5 +1,6 @@
 ﻿using System;
-using AWSHelper.CloudWatch;
+using AWSWrapper.CloudWatch;
+using AsmodatStandard.IO;
 
 namespace AWSHelper
 {
@@ -7,7 +8,7 @@ namespace AWSHelper
     {
         private static void executeCW(string[] args)
         {
-            var nArgs = GetNamedArguments(args);
+            var nArgs = CLIHelper.GetNamedArguments(args);
 
             var helper = new CloudWatchHelper();
             switch (args[1])

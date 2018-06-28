@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Linq;
 using AsmodatStandard.Extensions;
-using AWSHelper.ECS;
+using AWSWrapper.ECS;
+using AsmodatStandard.IO;
 
 namespace AWSHelper
 {
@@ -9,7 +10,7 @@ namespace AWSHelper
     {
         private static void executeECS(string[] args)
         {
-            var nArgs = GetNamedArguments(args);
+            var nArgs = CLIHelper.GetNamedArguments(args);
 
             var helper = new ECSHelper();
             switch (args[1])

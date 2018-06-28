@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Asmodat Standard\Asmodat Standard\Asmodat Standard.csproj" />
+    <ProjectReference Include="..\..\AWSWrapper\AWSWrapper.csproj" />
   </ItemGroup>
 
 </Project>

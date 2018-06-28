@@ -1,5 +1,6 @@
 ﻿using System;
-using AWSHelper.Route53;
+using AWSWrapper.Route53;
+using AsmodatStandard.IO;
 
 namespace AWSHelper
 {
@@ -7,7 +8,7 @@ namespace AWSHelper
     {
         private static void executeR53(string[] args)
         {
-            var nArgs = GetNamedArguments(args);
+            var nArgs = CLIHelper.GetNamedArguments(args);
 
             var helper = new Route53Helper();
             switch (args[1])

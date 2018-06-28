@@ -1,5 +1,6 @@
 ﻿using System;
-using AWSHelper.ELB;
+using AWSWrapper.ELB;
+using AsmodatStandard.IO;
 
 namespace AWSHelper
 {
@@ -7,7 +8,7 @@ namespace AWSHelper
     {
         private static void executeELB(string[] args)
         {
-            var nArgs = GetNamedArguments(args);
+            var nArgs = CLIHelper.GetNamedArguments(args);
 
             var helper = new ELBHelper();
             switch (args[1])

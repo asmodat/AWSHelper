@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using AsmodatStandard.Extensions;
+using AsmodatStandard.IO;
 
 namespace AWSHelper
 {
@@ -8,7 +9,7 @@ namespace AWSHelper
     {
         private static void executeCURL(string[] args)
         {
-            var nArgs = GetNamedArguments(args);
+            var nArgs = CLIHelper.GetNamedArguments(args);
 
             switch (args[1])
             {

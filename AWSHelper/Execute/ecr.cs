@@ -1,7 +1,8 @@
 ﻿using System;
-using AWSHelper.ECR;
+using AWSWrapper.ECR;
 using AsmodatStandard.Extensions;
 using System.Linq;
+using AsmodatStandard.IO;
 
 namespace AWSHelper
 {
@@ -9,7 +10,7 @@ namespace AWSHelper
     {
         private static void executeECR(string[] args)
         {
-            var nArgs = GetNamedArguments(args);
+            var nArgs = CLIHelper.GetNamedArguments(args);
 
             var helper = new ECRHelper();
             switch (args[1])

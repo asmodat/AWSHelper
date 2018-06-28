@@ -4,27 +4,12 @@ using System.Linq;
 using AsmodatStandard.Extensions;
 using AsmodatStandard.Extensions.Collections;
 using AsmodatStandard.Types;
+using AsmodatStandard.IO;
 
 namespace AWSHelper
 {
     public partial class Program
     {
-        private static Dictionary<string, string> GetNamedArguments(string[] args)
-        {
-            var namedArgs = new Dictionary<string, string>();
-            foreach (var arg in args)
-            {
-                if (arg.Contains('='))
-                {
-                    var kv = arg.SplitByFirst('=');
-                    var key = kv[0].Trim(' ', '-', '=');
-                    var value = kv[1].Trim();
-                    namedArgs[key] = value;
-                }
-            }
-            return namedArgs;
-        }
-
         static void Main(string[] args)
         {
             Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.3.2 by Asmodat ***");
@@ -35,14 +20,14 @@ namespace AWSHelper
                 throw new Exception("At least 1 argument must be specified.");
             }
 
-            var nArgs = GetNamedArguments(args);
+            var nArgs = CLIHelper.GetNamedArguments(args);
 
             if (args.Length > 1)
                 Console.WriteLine($"Executing command: '{args[0]} {args[1]}' Arguments: \n{nArgs.JsonSerialize(Newtonsoft.Json.Formatting.Indented)}\n");
 
             string executionMode;
             if (nArgs.ContainsKey("execution-mode") && 
-                !(executionMode = nArgs["executon-mode"]).IsNullOrEmpty())
+                !(executionMode = nArgs["execution-mode"]).IsNullOrEmpty())
             {
                 if (executionMode == "debug")
                 {
@@ -80,7 +65,7 @@ namespace AWSHelper
 
         private static void Execute(string[] args)
         {
-            switch (args[0])
+            switch (args[0]?.ToLower())
             {
                 case "ecs":
                     executeECS(args);
@@ -112,8 +97,9 @@ namespace AWSHelper
                     ("cloud-watch", "Accepts params: destroy-log-group"),
                     ("route53", "Accepts params: destroy-record"),
                     ("test", "Accepts params: curl-get"),
-                    ("[flags]", "Allowed Syntax: key=value, --key=value"),
-                    ("--execution-mode=silent-errors", "[All commands] Don't throw errors, only displays exception message."));
+                    ("[flags]", "Allowed Syntax: key=value, --key=value, -key='v1 v2 v3', -k, --key"),
+                    ("--execution-mode=silent-errors", "[All commands] Don't throw errors, only displays exception message."),
+                    ("--execution-mode=debug", "[All commands] Throw instantly without reporting a failure."));
                     break;
                 default:
                     {
