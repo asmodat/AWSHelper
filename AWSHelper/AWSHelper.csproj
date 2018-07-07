@@ -3,6 +3,15 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
+    <Product>AWSHelper</Product>
+    <Description>Amazon Web Services .NET Standard Extentions</Description>
+    <PackageId>Asmodat.AWSHelper</PackageId>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageReleaseNotes>first release</PackageReleaseNotes>
+    <Version>1.0.0</Version>
+    <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
+    <Company>Asmodat</Company>
+    <Authors>Asmodat</Authors>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,7 +24,8 @@
     <PackageReference Include="AWSSDK.CloudFormation" Version="3.3.10" />
     <PackageReference Include="AWSSDK.CloudWatch" Version="3.3.6" />
     <PackageReference Include="AWSSDK.CloudWatchLogs" Version="3.3.4.6" />
-    <PackageReference Include="AWSSDK.Core" Version="3.3.21.20" />
+    <PackageReference Include="AWSSDK.Core" Version="3.3.24.3" />
+    <PackageReference Include="AWSSDK.S3" Version="3.3.18.6" />
     <PackageReference Include="AWSSDK.EC2" Version="3.3.47.3" />
     <PackageReference Include="AWSSDK.ECR" Version="3.3.3.6" />
     <PackageReference Include="AWSSDK.ECS" Version="3.3.13.1" />

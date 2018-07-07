@@ -82,6 +82,12 @@ namespace AWSHelper
                 case "route53":
                     executeR53(args);
                     break;
+                case "iam":
+                    executeIAM(args);
+                    break;
+                case "s3":
+                    executeS3(args);
+                    break;
                 case "test":
                     executeCURL(args);
                     break;
@@ -96,6 +102,8 @@ namespace AWSHelper
                     ("elb", "Accepts params: destroy-load-balancer"),
                     ("cloud-watch", "Accepts params: destroy-log-group"),
                     ("route53", "Accepts params: destroy-record"),
+                    ("iam", "Accepts params: create-policy, create-role, delete-policy, delete-role, help"),
+                    ("s3", "Accepts params: upload-text, help"),
                     ("test", "Accepts params: curl-get"),
                     ("[flags]", "Allowed Syntax: key=value, --key=value, -key='v1 v2 v3', -k, --key"),
                     ("--execution-mode=silent-errors", "[All commands] Don't throw errors, only displays exception message."),
