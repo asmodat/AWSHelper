@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Asmodat.AWSWrapper" Version="1.0.0.10" />
     <PackageReference Include="AWSSDK.AutoScaling" Version="3.3.4.3" />
     <PackageReference Include="AWSSDK.AutoScalingPlans" Version="3.3.0.4" />
     <PackageReference Include="AWSSDK.CloudFormation" Version="3.3.10" />
@@ -39,7 +40,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Asmodat Standard\Asmodat Standard\Asmodat Standard.csproj" />
+    <ProjectReference Include="..\..\Asmodat Standard\Asmodat Standard\Asmodat Standard.csproj">
+      <Private>true</Private>
+    </ProjectReference>
     <ProjectReference Include="..\..\AWSWrapper\AWSWrapper.csproj" />
   </ItemGroup>
 

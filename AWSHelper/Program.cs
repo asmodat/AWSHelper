@@ -1,10 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using AsmodatStandard.Extensions;
 using AsmodatStandard.Extensions.Collections;
 using AsmodatStandard.Types;
 using AsmodatStandard.IO;
+using AWSWrapper.IAM;
+using AWSWrapper.ST;
+using Amazon.SecurityToken.Model;
+using AWSWrapper.S3;
+using AWSWrapper.KMS;
 
 namespace AWSHelper
 {
@@ -12,7 +15,7 @@ namespace AWSHelper
     {
         static void Main(string[] args)
         {
-            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.3.2 by Asmodat ***");
+            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.3.5 by Asmodat ***");
 
             if (args.Length < 1)
             {
@@ -65,6 +68,16 @@ namespace AWSHelper
 
         private static void Execute(string[] args)
         {
+            var nArgs = CLIHelper.GetNamedArguments(args);
+
+            Credentials credentials = null;
+            if (nArgs.ContainsKey("assume-role"))
+            {
+                var role = (new IAMHelper(null)).GetRoleByNameAsync(name: nArgs["assume-role"]).Result;
+                var result = (new STHelper(null)).AssumeRoleAsync(role.Arn).Result;
+                credentials = result.Credentials;
+            }
+
             switch (args[0]?.ToLower())
             {
                 case "ecs":
@@ -83,10 +96,13 @@ namespace AWSHelper
                     executeR53(args);
                     break;
                 case "iam":
-                    executeIAM(args);
+                    executeIAM(args, credentials);
                     break;
                 case "s3":
-                    executeS3(args);
+                    executeS3(args, credentials);
+                    break;
+                case "kms":
+                    executeKMS(args, credentials);
                     break;
                 case "test":
                     executeCURL(args);
@@ -104,6 +120,7 @@ namespace AWSHelper
                     ("route53", "Accepts params: destroy-record"),
                     ("iam", "Accepts params: create-policy, create-role, delete-policy, delete-role, help"),
                     ("s3", "Accepts params: upload-text, help"),
+                    ("kms", "Accepts params: create-grant, remove-grant, help"),
                     ("test", "Accepts params: curl-get"),
                     ("[flags]", "Allowed Syntax: key=value, --key=value, -key='v1 v2 v3', -k, --key"),
                     ("--execution-mode=silent-errors", "[All commands] Don't throw errors, only displays exception message."),

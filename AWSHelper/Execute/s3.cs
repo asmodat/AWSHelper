@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Linq;
 using System.Text;
+using Amazon.SecurityToken.Model;
 using AsmodatStandard.IO;
 using AWSWrapper.S3;
 
@@ -8,11 +8,11 @@ namespace AWSHelper
 {
     public partial class Program
     {
-        private static void executeS3(string[] args)
+        private static void executeS3(string[] args, Credentials credentials)
         {
             var nArgs = CLIHelper.GetNamedArguments(args);
+            var helper = new S3Helper(credentials);
 
-            var helper = new S3Helper();
             switch (args[1])
             {
                 case "upload-text":
@@ -23,7 +23,7 @@ namespace AWSHelper
                             text: nArgs["text"],
                             encoding: Encoding.UTF8).Result;
 
-                        Console.WriteLine($"SUCCESS, Text Saved, Bucket {result.BucketName}, Key {result.Key}, Version: {result.VersionId}");
+                        Console.WriteLine($"SUCCESS, Text Saved, Bucket {nArgs["bucket"]}, Key {nArgs["key"]}, ETag: {result}");
                     }
                     ; break;
                 case "help":
