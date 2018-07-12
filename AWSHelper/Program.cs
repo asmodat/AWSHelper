@@ -6,8 +6,8 @@ using AsmodatStandard.IO;
 using AWSWrapper.IAM;
 using AWSWrapper.ST;
 using Amazon.SecurityToken.Model;
-using AWSWrapper.S3;
-using AWSWrapper.KMS;
+using System.Threading;
+using System.Diagnostics;
 
 namespace AWSHelper
 {
@@ -15,7 +15,7 @@ namespace AWSHelper
     {
         static void Main(string[] args)
         {
-            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.3.5 by Asmodat ***");
+            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.3.7 by Asmodat ***");
 
             if (args.Length < 1)
             {
@@ -28,24 +28,76 @@ namespace AWSHelper
             if (args.Length > 1)
                 Console.WriteLine($"Executing command: '{args[0]} {args[1]}' Arguments: \n{nArgs.JsonSerialize(Newtonsoft.Json.Formatting.Indented)}\n");
 
-            string executionMode;
-            if (nArgs.ContainsKey("execution-mode") && 
-                !(executionMode = nArgs["execution-mode"]).IsNullOrEmpty())
+            var mode = nArgs.ContainsKey("execution-mode") ? nArgs["execution-mode"]?.ToLower() : null;
+
+            ExecuteWithMode(mode, args);
+
+            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Success");
+        }
+
+        /// <summary>
+        /// returns value indicating wheather or not execution suceeded otherwise throws
+        /// </summary>
+        private static bool ExecuteWithMode(string executionMode, string[] args)
+        {
+            var nArgs = CLIHelper.GetNamedArguments(args);
+            Console.WriteLine($"Execution mode: {executionMode ?? "not-defined"}");
+
+            if (!executionMode.IsNullOrEmpty())
             {
                 if (executionMode == "debug")
                 {
                     Execute(args);
+                    return true;
                 }
                 else if (executionMode == "silent-errors")
                 {
                     try
                     {
                         Execute(args);
+                        return true;
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Failure, Error Message: {ex.JsonSerializeAsPrettyException()}");
+                        return false;
                     }
+                }
+                else if (executionMode == "retry")
+                {
+
+                    int counter = 0;
+                    var sw = Stopwatch.StartNew();
+                    int times = (nArgs.ContainsKey("retry-times") ? nArgs["retry-times"] : "1").ToIntOrDefault(1);
+                    int delay = (nArgs.ContainsKey("retry-delay") ? nArgs["retry-delay"] : "1000").ToIntOrDefault(1);
+                    bool throws = (nArgs.ContainsKey("retry-throws") ? nArgs["retry-throws"] : "true").ToBoolOrDefault(true);
+                    int timeout = (nArgs.ContainsKey("retry-timeout") ? nArgs["retry-timeout"] : $"{60 * 3600}").ToIntOrDefault(60 * 3600);
+
+                    Console.WriteLine($"Execution with retry: Max: {times}, Delay: {delay} [ms], Throws: {(throws ? "Yes" : "No")}, Timeout: {timeout} [s]");
+
+                    do
+                    {
+                        Console.WriteLine($"Execution trial: {counter}/{times}, Elapsed/Timeout: {sw.ElapsedMilliseconds/1000}/{timeout} [s]");
+
+                        try
+                        {
+                            Execute(args);
+                            return true;
+                        }
+                        catch(Exception ex)
+                        {
+                            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Failure, Error Message: {ex.JsonSerializeAsPrettyException()}");
+
+                            if ((sw.ElapsedMilliseconds / 1000) >= timeout || (throws && counter == times))
+                                throw;
+
+                            Console.WriteLine($"Execution retry delay: {delay} [ms]");
+                            Thread.Sleep(delay);
+                        }
+                    }
+                    while (++counter <= times);
+
+                    return true;
                 }
                 else
                     throw new Exception($"[{TickTime.Now.ToLongDateTimeString()}] Unknown execution-mode: '{executionMode}', try: 'debug' or 'silent-errors'.");
@@ -55,6 +107,7 @@ namespace AWSHelper
                 try
                 {
                     Execute(args);
+                    return true;
                 }
                 catch
                 {
@@ -62,8 +115,6 @@ namespace AWSHelper
                     throw;
                 }
             }
-
-            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Success");
         }
 
         private static void Execute(string[] args)
@@ -124,7 +175,8 @@ namespace AWSHelper
                     ("test", "Accepts params: curl-get"),
                     ("[flags]", "Allowed Syntax: key=value, --key=value, -key='v1 v2 v3', -k, --key"),
                     ("--execution-mode=silent-errors", "[All commands] Don't throw errors, only displays exception message."),
-                    ("--execution-mode=debug", "[All commands] Throw instantly without reporting a failure."));
+                    ("--execution-mode=debug", "[All commands] Throw instantly without reporting a failure."),
+                    ("--execution-mode=retry", "[All commands] Repeats command at least once in case it fails. [Sub Flags] retry-times (default 1), retry-delay (default 1000 ms), retry-throws (default true)"));
                     break;
                 default:
                     {
