@@ -49,7 +49,7 @@ namespace AWSHelper
                             key: nArgs["path"],
                             throwOnFailure: true).Result;
 
-                        Console.WriteLine($"SUCCESS, Text Read, Bucket: {nArgs["bucket"]}, Path: {nArgs.GetValueOrDefault("path")}, Deleted: '{result.DeletedObjects?.JsonSerialize() ?? "null"}'");
+                        Console.WriteLine($"SUCCESS, Text Read, Bucket: {nArgs["bucket"]}, Path: {nArgs.GetValueOrDefault("path")}, Deleted: '{(result ? "true" : "false")}'");
                         Console.WriteLine(result);
                     }
                     ; break;
