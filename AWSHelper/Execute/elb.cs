@@ -14,8 +14,16 @@ namespace AWSHelper
             switch (args[1])
             {
                 case "destroy-load-balancer":
-                    helper.DestroyLoadBalancer(nArgs["name"]).Wait();
+                    helper.DestroyLoadBalancer(nArgs["name"], throwIfNotFound: true).Wait();
                     ; break;
+                case "help":
+                case "--help":
+                case "-help":
+                case "-h":
+                case "h":
+                    HelpPrinter($"{args[0]}", "Amazon Elastic Load Balancer",
+                    ("destroy-load-balancer", "Accepts params: name"));
+                    break;
                 default: throw new Exception($"Unknown ELB command: '{args[1]}'");
             }
         }

@@ -15,7 +15,7 @@ namespace AWSHelper
     {
         static void Main(string[] args)
         {
-            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.4.1 by Asmodat ***");
+            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.5.0 by Asmodat ***");
 
             if (args.Length < 1)
             {
@@ -155,6 +155,9 @@ namespace AWSHelper
                 case "kms":
                     executeKMS(args, credentials);
                     break;
+                case "fargate":
+                    executeFargate(args);
+                    break;
                 case "test":
                     executeCURL(args);
                     break;
@@ -172,6 +175,7 @@ namespace AWSHelper
                     ("iam", "Accepts params: create-policy, create-role, delete-policy, delete-role, help"),
                     ("s3", "Accepts params: upload-text, help"),
                     ("kms", "Accepts params: create-grant, remove-grant, help"),
+                    ("fargate", "Accepts params: "),
                     ("test", "Accepts params: curl-get"),
                     ("[flags]", "Allowed Syntax: key=value, --key=value, -key='v1 v2 v3', -k, --key"),
                     ("--execution-mode=silent-errors", "[All commands] Don't throw errors, only displays exception message."),
