@@ -19,14 +19,15 @@ namespace AWSHelper
             {
                 case "upload-text":
                     {
+                        var keyId = nArgs.GetValueOrDefault("key");
                         var result = helper.UploadTextAsync(
                             bucketName: nArgs["bucket"],
                             key: nArgs["path"],
                             text: nArgs["text"],
-                            keyId: nArgs.GetValueOrDefault("key"),
+                            keyId: keyId,
                             encoding: Encoding.UTF8).Result;
 
-                        Console.WriteLine($"SUCCESS, Text Saved, Bucket {nArgs["bucket"]}, Path {nArgs["path"]}, Encryption Key {nArgs["key"]}, ETag: {result}");
+                        Console.WriteLine($"SUCCESS, Text Saved, Bucket {nArgs["bucket"]}, Path {nArgs["path"]}, Encryption Key {keyId}, ETag: {result}");
                     }
                     ; break;
                 case "download-text":

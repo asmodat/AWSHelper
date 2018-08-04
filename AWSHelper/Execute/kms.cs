@@ -16,6 +16,15 @@ namespace AWSHelper
 
             switch (args[1])
             {
+                case "list-grants":
+                    {
+                        var result = helper.GetGrantsByKeyNameAsync(
+                         keyName: nArgs["key"],
+                         grantName: nArgs["name"]).Result;
+
+                        Console.WriteLine($"{result.JsonSerialize(Newtonsoft.Json.Formatting.Indented)}");
+                    }
+                    ; break;
                 case "create-grant":
                     {
                         var grants = nArgs["grants"].Split(',').Where(x => !x.IsNullOrWhitespace()).ToEnum<KMSHelper.GrantType>();
@@ -32,14 +41,15 @@ namespace AWSHelper
                     ; break;
                 case "remove-grant":
                     {
-                        var result = helper.RemoveGrantByName(
+                        var result = helper.RemoveGrantsByName(
                          keyName: nArgs["key"],
                          grantName: nArgs["name"]).Result;
 
-                        Console.WriteLine($"SUCCESS, grant '{nArgs["name"]}' of key '{nArgs["key"]}' was removed.");
+                        Console.WriteLine($"SUCCESS, {result?.Length ?? 0} grant/s with name '{nArgs["name"]}' of key '{nArgs["key"]}' were removed.");
                     }
                     ; break;
                 case "help": HelpPrinter($"{args[0]}", "Amazon Identity and Access Management",
+                    ("list-grants", "Accepts params: key, name"),
                     ("create-grant", "Accepts params: key, name, role, grants (',' separated: Encrypt, Decrypt)"),
                     ("remove-grant", "Accepts params: key, name"));
                     break;
