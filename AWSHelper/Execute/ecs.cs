@@ -15,6 +15,9 @@ namespace AWSHelper
             var helper = new ECSHelper();
             switch (args[1])
             {
+                case "destroy-cluster":
+                    helper.DeleteClusterAsync(nArgs["name"]).Wait();
+                    ; break;
                 case "destroy-service":
                     helper.DestroyService(
                         nArgs.FirstOrDefault(x => x.Key == "cluster").Value, //optional
@@ -29,7 +32,22 @@ namespace AWSHelper
                         nArgs["service"],
                         nArgs["timeout"].ToInt32()).Wait();
                     ; break;
-                default: throw new Exception($"Unknown ECS command: '{args[1]}'");
+                case "help":
+                case "--help":
+                case "-help":
+                case "-h":
+                case "h":
+                    HelpPrinter($"{args[0]}", "Amazon S3",
+                    ("destroy-cluster", "Accepts params: name"),
+                    ("destroy-service", "Accepts params: cluster, service"),
+                    ("destroy-task-definitions", "Accepts params: family"),
+                    ("await-service-start", "Accepts params: cluster, service, timeout"));
+                    break;
+                default:
+                    {
+                        Console.WriteLine($"Try '{args[0]} help' to find out list of available commands.");
+                        throw new Exception($"Unknown ECS command: '{args[0]} {args[1]}'");
+                    }
             }
         }
     }

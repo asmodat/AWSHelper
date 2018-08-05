@@ -15,7 +15,7 @@ namespace AWSHelper
     {
         static void Main(string[] args)
         {
-            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.5.2 by Asmodat ***");
+            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.5.3 by Asmodat ***");
 
             if (args.Length < 1)
             {
@@ -167,7 +167,7 @@ namespace AWSHelper
                 case "-h":
                 case "h":
                     HelpPrinter($"{args[0]}", "AWSHelper List of available commands",
-                    ("ecs", "Accepts params: destroy-service, destroy-task-definitions, await-service-start"),
+                    ("ecs", "Accepts params: destroy-cluster, destroy-service, destroy-task-definitions, await-service-start"),
                     ("ecr", "Accepts params: retag, delete, help"),
                     ("elb", "Accepts params: destroy-load-balancer"),
                     ("cloud-watch", "Accepts params: destroy-log-group"),
