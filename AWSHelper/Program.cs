@@ -15,7 +15,7 @@ namespace AWSHelper
     {
         static void Main(string[] args)
         {
-            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.5.3 by Asmodat ***");
+            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.5.4 by Asmodat ***");
 
             if (args.Length < 1)
             {
@@ -156,7 +156,7 @@ namespace AWSHelper
                     executeKMS(args, credentials);
                     break;
                 case "fargate":
-                    executeFargate(args);
+                    executeFargate(args, credentials);
                     break;
                 case "test":
                     executeCURL(args);
