@@ -21,14 +21,15 @@ using System.Diagnostics;
 using System.Net.Sockets;
 using AsmodatStandard.Extensions.Net;
 using Amazon.Route53.Model;
+using AWSWrapper.ACM;
 
 namespace AWSHelper.Fargate
 {
-    public static class FargateResourceHelperV1
+    public static class FargateResourceHelperV2
     {
         public static void Create(
-            FargateResourceV1 resource,
-            ELBHelper elb, Route53Helper e53, ECSHelper ecs, CloudWatchHelper cw, KMSHelper kms, IAMHelper iam)
+            FargateResourceV2 resource,
+            ELBHelper elb, Route53Helper e53, ECSHelper ecs, CloudWatchHelper cw, KMSHelper kms, IAMHelper iam, ACMHelper acm)
         {
             var errList = new List<Exception>();
 
@@ -65,11 +66,17 @@ namespace AWSHelper.Fargate
             Console.WriteLine("Crating Application Load Balancer...");
             var loadBalancer = elb.CreateApplicationLoadBalancerAsync(resource.LoadBalancerName, resource.Subnets, resource.SecurityGroups, !resource.IsPublic).Result.PrintResponse();
 
-            Console.WriteLine("Creating Target Group...");
-            var targetGroup = elb.CreateHttpTargetGroupAsync(resource.TargetGroupName, resource.Port, resource.VPC, resource.HealthCheckPath).Result.PrintResponse();
+            Console.WriteLine("Retriving Certificate...");
+            var cert = acm.DescribeCertificateByDomainName(resource.CertificateDomainName).Result.PrintResponse();
 
-            Console.WriteLine("Creating Listener...");
-            var listener = elb.CreateHttpListenerAsync(loadBalancer.LoadBalancerArn, targetGroup.TargetGroupArn, resource.Port).Result.PrintResponse();
+            Console.WriteLine("Creating HTTP Target Group...");
+            var targetGroup_http = elb.CreateHttpTargetGroupAsync(resource.TargetGroupName, resource.Port, resource.VPC, resource.HealthCheckPath).Result.PrintResponse();
+
+            Console.WriteLine("Creating HTTPS Listener...");
+            var listener_https = elb.CreateHttpsListenerAsync(loadBalancer.LoadBalancerArn, targetGroup_http.TargetGroupArn, certificateArn: cert.CertificateArn).Result.PrintResponse();
+
+            Console.WriteLine("Creating HTTP Listener...");
+            var listener_http = elb.CreateHttpListenerAsync(loadBalancer.LoadBalancerArn, targetGroup_http.TargetGroupArn, resource.Port).Result.PrintResponse();
 
             if (resource.IsPublic && !resource.ZonePublic.IsNullOrWhitespace())
             {
@@ -115,7 +122,7 @@ namespace AWSHelper.Fargate
                 taskDefinition: taskDefinition,
                 desiredCount: resource.DesiredCount,
                 cluster: resource.ClusterName,
-                targetGroup: targetGroup,
+                targetGroup: targetGroup_http,
                 assignPublicIP: resource.IsPublic,
                 securityGroups: resource.SecurityGroups,
                 subnets: resource.Subnets
@@ -130,8 +137,8 @@ namespace AWSHelper.Fargate
                 treshold: 1).Result.PrintResponse();
         }
 
-        public static void SwapRoutes(FargateResourceV1 resource, 
-            FargateResourceV1 resourceNew, ELBHelper elb, Route53Helper r53, CloudWatchHelper cw)
+        public static void SwapRoutes(FargateResourceV2 resource, 
+            FargateResourceV2 resourceNew, ELBHelper elb, Route53Helper r53, CloudWatchHelper cw)
         {
             Console.WriteLine("Fetching DNS Private Record...");
             var newPrivateRecord = r53.GetCNameRecordSet(resourceNew.ZonePrivate, resourceNew.DNSCName, throwIfNotFound: true)
@@ -235,8 +242,8 @@ namespace AWSHelper.Fargate
             AwaitDnsUpsert(resource, resourceNew, r53, resource.DnsResolveTimeout).PrintResponse();
         }
 
-        public static void SetRoutes(FargateResourceV1 resource,
-            FargateResourceV1 resourceNew, ELBHelper elb, Route53Helper r53, CloudWatchHelper cw)
+        public static void SetRoutes(FargateResourceV2 resource,
+            FargateResourceV2 resourceNew, ELBHelper elb, Route53Helper r53, CloudWatchHelper cw)
         {
             Console.WriteLine("Fetching DNS Private Record...");
             var newPrivateRecord = r53.GetCNameRecordSet(resourceNew.ZonePrivate, resourceNew.DNSCName, throwIfNotFound: true)
@@ -294,7 +301,7 @@ namespace AWSHelper.Fargate
         }
 
         public static async Task<List<Exception>> Destroy(
-            FargateResourceV1 resource, 
+            FargateResourceV2 resource, 
             ELBHelper elb, Route53Helper e53, ECSHelper ecs, CloudWatchHelper cw, KMSHelper kms, IAMHelper iam, 
             bool throwOnFailure,
             bool catchDisable)
@@ -360,14 +367,14 @@ namespace AWSHelper.Fargate
             return errList;
         }
 
-        public static string AwaitDnsUpsert(FargateResourceV1 resource, FargateResourceV1 resourceNew, Route53Helper r53, int recordDnsUpdateTimeout)
+        public static string AwaitDnsUpsert(FargateResourceV2 resource, FargateResourceV2 resourceNew, Route53Helper r53, int recordDnsUpdateTimeout)
         {
             var hostedZoneName = r53
                 .GetHostedZoneAsync(resource.IsPublic ? resource.ZonePublic : resource.ZonePrivate)
                 .Result.HostedZone.Name.TrimEnd('.');
 
-            var uriNew = $"www.{resourceNew.DNSCName}.{hostedZoneName}";
-            var uri = $"www.{resource.DNSCName}.{hostedZoneName}";
+            var uriNew = $"{resourceNew.DNSCName}.{hostedZoneName}";
+            var uri = $"{resource.DNSCName}.{hostedZoneName}";
             var expectedHostName = DnsEx.GetHostName(uriNew, recordDnsUpdateTimeout/2);
 
             string newRecord;

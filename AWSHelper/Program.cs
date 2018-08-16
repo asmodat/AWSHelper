@@ -15,7 +15,7 @@ namespace AWSHelper
     {
         static void Main(string[] args)
         {
-            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.5.4 by Asmodat ***");
+            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.7.0 by Asmodat ***");
 
             if (args.Length < 1)
             {

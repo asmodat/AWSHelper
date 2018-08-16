@@ -14,14 +14,9 @@ using Amazon.SecurityToken.Model;
 using AWSWrapper.KMS;
 using AWSWrapper.IAM;
 using Newtonsoft.Json;
-using System.Threading;
 using AWSHelper.Extensions;
 using AWSHelper.Fargate;
-using System.Net;
-using System.Diagnostics;
-using Amazon.Route53.Model;
-using Amazon.CloudWatch;
-using Amazon.Route53;
+using AWSWrapper.ACM;
 
 namespace AWSHelper
 {
@@ -37,6 +32,7 @@ namespace AWSHelper
             var cw = new CloudWatchHelper();
             var kms = new KMSHelper(credentials);
             var iam = new IAMHelper(credentials);
+            var acm = new ACMHelper();
 
             switch (args[1])
             {
@@ -44,10 +40,8 @@ namespace AWSHelper
                     {
                         bool catchDisable = nArgs.GetValueOrDefault("catch-disable", "false").ToBool();
                         int resourceCreateTimeout = nArgs["resource-create-timeout"].ToInt32();
-                        int recordDnsUpdateTimeout = nArgs.GetValueOrDefault("record-dns-update-timeout").ToIntOrDefault(5 * 60 * 1000);
 
-                        var resource = new FargateResourceV1();
-                        resource.InitializeCreationParameters(nArgs);
+                        var resource = new FargateResourceV2(nArgs);
 
                         string prefix_new = "a-";
                         string prefix_old = "b-";
@@ -88,12 +82,12 @@ namespace AWSHelper
                         resourceOld.SetDNSCName($"{prefix_old}{resource.DNSCName}");
 
                         Console.WriteLine("Destroying Temporary Resources...");
-                        FargateResourceHelperV1.Destroy(resourceNew, elb, r53, ecs, cw, kms, iam, throwOnFailure: true, catchDisable: catchDisable).Await();
+                        FargateResourceHelperV2.Destroy(resourceNew, elb, r53, ecs, cw, kms, iam, throwOnFailure: true, catchDisable: catchDisable).Await();
 
                         try
                         {
                             Console.WriteLine("Creating New Resources...");
-                            FargateResourceHelperV1.Create(resourceNew, elb, r53, ecs, cw, kms, iam);
+                            FargateResourceHelperV2.Create(resourceNew, elb, r53, ecs, cw, kms, iam, acm);
 
                             Console.WriteLine($"Awaiting up to {resourceCreateTimeout} [s] for Tasks Desired Status...");
                             ecs.WaitForServiceToStart(resourceNew.ClusterName, resourceNew.ServiceName, resourceCreateTimeout).Await();
@@ -103,7 +97,7 @@ namespace AWSHelper
                             Console.WriteLine($"Failed New Resource Deployment with exception: {ex.JsonSerializeAsPrettyException(Formatting.Indented)}");
 
                             Console.WriteLine("Destroying New Resources...");
-                            FargateResourceHelperV1.Destroy(resourceNew, elb, r53, ecs, cw, kms, iam, throwOnFailure: true, catchDisable: catchDisable).Await();
+                            FargateResourceHelperV2.Destroy(resourceNew, elb, r53, ecs, cw, kms, iam, throwOnFailure: true, catchDisable: catchDisable).Await();
 
                             throw new Exception("New Resource Deployment Failure", ex);
                         }
@@ -113,24 +107,23 @@ namespace AWSHelper
                             record.HealthCheckId != r53.GetHealthCheckAsync(resource.HealthCheckName, throwIfNotFound: false).Result?.Id)
                         {
                             Console.WriteLine("DNS Route Initialization...");
-                            FargateResourceHelperV1.SetRoutes(resource, resourceNew, elb, r53, cw);
+                            FargateResourceHelperV2.SetRoutes(resource, resourceNew, elb, r53, cw);
                         }
                         else
                         {
                             Console.WriteLine("DNS Route Swap...");
-                            FargateResourceHelperV1.SwapRoutes(resource, resourceNew, elb, r53, cw);
+                            FargateResourceHelperV2.SwapRoutes(resource, resourceNew, elb, r53, cw);
                         }
 
                         Console.WriteLine("Destroying Old Resources...");
-                        FargateResourceHelperV1.Destroy(resourceOld, elb, r53, ecs, cw, kms, iam, throwOnFailure: true, catchDisable: catchDisable).Await();
+                        FargateResourceHelperV2.Destroy(resourceOld, elb, r53, ecs, cw, kms, iam, throwOnFailure: true, catchDisable: catchDisable).Await();
                     }
                     ; break;
                 case "destroy-resources":
                     {
                         bool catchDisable = nArgs.GetValueOrDefault("catch-disable", "false").ToBool();
 
-                        var resource = new FargateResourceV1();
-                        resource.InitializeTerminationParameters(nArgs);
+                        var resource = new FargateResourceV2(nArgs);
 
                         var resourceA = resource.DeepCopy();
                         resourceA.SetName($"a-{resource.Name}");
@@ -140,9 +133,9 @@ namespace AWSHelper
                         resourceB.SetName($"b-{resource.Name}");
                         resourceB.SetDNSCName($"b-{resource.DNSCName}");
 
-                        var t0 = FargateResourceHelperV1.Destroy(resource, elb, r53, ecs, cw, kms, iam, throwOnFailure: true, catchDisable: catchDisable);
-                        var t1 = FargateResourceHelperV1.Destroy(resourceA, elb, r53, ecs, cw, kms, iam, throwOnFailure: true, catchDisable: catchDisable);
-                        var t2 = FargateResourceHelperV1.Destroy(resourceB, elb, r53, ecs, cw, kms, iam, throwOnFailure: true, catchDisable: catchDisable);
+                        var t0 = FargateResourceHelperV2.Destroy(resource, elb, r53, ecs, cw, kms, iam, throwOnFailure: true, catchDisable: catchDisable);
+                        var t1 = FargateResourceHelperV2.Destroy(resourceA, elb, r53, ecs, cw, kms, iam, throwOnFailure: true, catchDisable: catchDisable);
+                        var t2 = FargateResourceHelperV2.Destroy(resourceB, elb, r53, ecs, cw, kms, iam, throwOnFailure: true, catchDisable: catchDisable);
 
                         var result = Task.WhenAll(t0, t1, t2).Result;
 
