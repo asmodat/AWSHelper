@@ -13,9 +13,11 @@ namespace AWSHelper
 {
     public partial class Program
     {
+        private static readonly string _version = "0.8.1";
+
         static void Main(string[] args)
         {
-            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v0.7.0 by Asmodat ***");
+            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v{_version} by Asmodat ***");
 
             if (args.Length < 1)
             {
@@ -129,8 +131,11 @@ namespace AWSHelper
                 credentials = result.Credentials;
             }
 
-            switch (args[0]?.ToLower())
+            switch (args[0]?.ToLower()?.TrimStart("-"))
             {
+                case "ec2":
+                    executeEC2(args, credentials);
+                    break;
                 case "ecs":
                     executeECS(args);
                     break;
@@ -161,12 +166,15 @@ namespace AWSHelper
                 case "test":
                     executeCURL(args);
                     break;
+                case "version":
+                case "ver":
+                case "v":
+                    Console.WriteLine($"Version: v{_version}");
+                    break;
                 case "help":
-                case "--help":
-                case "-help":
-                case "-h":
                 case "h":
                     HelpPrinter($"{args[0]}", "AWSHelper List of available commands",
+                    ("ec2", "Accepts params: create-instance, help"),
                     ("ecs", "Accepts params: destroy-cluster, destroy-service, destroy-task-definitions, await-service-start"),
                     ("ecr", "Accepts params: retag, delete, help"),
                     ("elb", "Accepts params: destroy-load-balancer"),
@@ -177,6 +185,7 @@ namespace AWSHelper
                     ("kms", "Accepts params: create-grant, remove-grant, help"),
                     ("fargate", "Accepts params: "),
                     ("test", "Accepts params: curl-get"),
+                    ("version", "Accepts params: none"),
                     ("[flags]", "Allowed Syntax: key=value, --key=value, -key='v1 v2 v3', -k, --key"),
                     ("--execution-mode=silent-errors", "[All commands] Don't throw errors, only displays exception message."),
                     ("--execution-mode=debug", "[All commands] Throw instantly without reporting a failure."),
