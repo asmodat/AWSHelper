@@ -50,7 +50,7 @@ namespace AWSHelper
                         {
                             for (int i = 0; i < zones.Length; i++)
                             {
-                                var suffix = i > 0 ? $" {i+1}" : "";
+                                var suffix = i > 0 ? $" {i + 1}" : "";
                                 tags.Add($"Route53 Enable{suffix}", "true");
                                 tags.Add($"Route53 Name{suffix}", cname);
                                 tags.Add($"Route53 Zone{suffix}", zones[i]);
@@ -68,7 +68,7 @@ namespace AWSHelper
                             associatePublicIpAddress: publicIp,
                             tags: tags).Result.Reservation.Instances.Single().InstanceId;
 
-                        if (nArgs.GetValueOrDefault("await-start").ToBoolOrDefault(true))
+                        if (nArgs.GetValueOrDefault("await-start").ToBoolOrDefault(false))
                         {
                             var timeout_ms = nArgs.GetValueOrDefault("await-start-timeout").ToIntOrDefault(5 * 60 * 1000);
 
@@ -76,6 +76,16 @@ namespace AWSHelper
 
                             ec2.AwaitInstanceStateCode(instanceId,
                                 EC2Helper.InstanceStateCode.running, timeout_ms: timeout_ms).Wait();
+                        }
+
+                        if (nArgs.GetValueOrDefault("await-system-start").ToBoolOrDefault(false))
+                        {
+                            var timeout_ms = nArgs.GetValueOrDefault("await-system-start-timeout").ToIntOrDefault(5 * 60 * 1000);
+
+                            Console.WriteLine($"Awaiting up to {timeout_ms} [ms] for instance '{instanceId}' OS to start...");
+
+                            ec2.AwaitInstanceStatus(instanceId,
+                                EC2Helper.InstanceSummaryStatus.Ok, timeout_ms: timeout_ms).Wait();
                         }
 
                         Console.WriteLine($"SUCCESS, Instance '{instanceId}' was created.");
@@ -93,17 +103,32 @@ namespace AWSHelper
                         else
                             throw new Exception("Not Supported Arguments");
 
-                        instances.ParallelForEach(i => {
+                        instances.ParallelForEach(i =>
+                        {
+                            void TryRemoveTags()
+                            {
+                                if (nArgs.GetValueOrDefault("try-delete-tags").ToBoolOrDefault(false))
+                                    return;
+                                var err = ec2.DeleteAllInstanceTags(i.InstanceId).CatchExceptionAsync().Result;
+
+                                if (err == null)
+                                    Console.WriteLine("Removed instance tags.");
+                                else
+                                    Console.WriteLine($"Failed to remove instance tags, Error: {err.JsonSerializeAsPrettyException()}");
+                            }
+
                             if (i.State.Code == (int)InstanceStateCode.terminating ||
-                                i.State.Code == (int)InstanceStateCode.terminated)
+                            i.State.Code == (int)InstanceStateCode.terminated)
                             {
                                 Console.WriteLine($"Instance {i.InstanceId} is already terminating or terminated.");
+                                TryRemoveTags();
                                 return;
                             }
 
                             Console.WriteLine($"Terminating {i.InstanceId}...");
                             var result = ec2.TerminateInstance(i.InstanceId).Result;
                             Console.WriteLine($"Instance {i.InstanceId} state changed {result.PreviousState.Name} -> {result.CurrentState.Name}");
+                            TryRemoveTags();
                         });
 
                         Console.WriteLine($"SUCCESS, All Instances Are Terminated.");

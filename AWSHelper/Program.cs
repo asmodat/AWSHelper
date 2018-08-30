@@ -13,7 +13,7 @@ namespace AWSHelper
 {
     public partial class Program
     {
-        private static readonly string _version = "0.8.1";
+        private static readonly string _version = "0.8.3";
 
         static void Main(string[] args)
         {
