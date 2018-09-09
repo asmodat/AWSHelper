@@ -9,6 +9,8 @@ using Amazon.SecurityToken.Model;
 using AsmodatStandard.Extensions.Collections;
 using static AWSWrapper.EC2.EC2Helper;
 using Amazon.EC2.Model;
+using AsmodatStandard.Extensions.IO;
+using System.Reflection;
 
 namespace AWSHelper
 {
@@ -57,7 +59,39 @@ namespace AWSHelper
                             }
                         }
 
-                        var instanceId = ec2.CreateInstanceAsync(
+                        string instanceId;
+
+                        if (nArgs.Any(x => x.Key.IsWildcardMatch("ebs-*")))
+                        {
+                            Console.WriteLine("Advanced Instance Creation Initiated...");
+                            var ebsOptymalized = nArgs["ebs-optymalized"].ToBoolOrDefault(true);
+                            var rootDeviceName = nArgs["ebs-root-dev-name"];
+                            var rootSnapshotId = nArgs.GetValueOrDefault("ebs-root-snapshot-id");
+                            var rootVolumeSize = nArgs["ebs-root-volume-size"].ToInt32();
+                            var rootIOPS = nArgs["ebs-root-iops"].ToIntOrDefault(3600);
+                            var rootVolumeType = nArgs["ebs-root-volume-type"];
+
+                            instanceId = ec2.CreateInstanceAsync(
+                            imageId: imageId,
+                            instanceType: instanceType,
+                            keyName: keyName,
+                            securityGroupId: securityGroupId,
+                            subnetId: subnet,
+                            roleName: role,
+                            shutdownBehavior: shutdownTermination ? ShutdownBehavior.Terminate : ShutdownBehavior.Stop,
+                            associatePublicIpAddress: publicIp,
+                            EbsOptymalized: ebsOptymalized,
+                            rootDeviceName: rootDeviceName,
+                            rootSnapshotId: rootSnapshotId,
+                            rootVolumeSize: rootVolumeSize,
+                            rootIOPS: rootIOPS,
+                            rootVolumeType: rootVolumeType,
+                            tags: tags).Result.Reservation.Instances.Single().InstanceId;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Basic Instance Creation Initiated...");
+                            instanceId = ec2.CreateInstanceAsync(
                             imageId: imageId,
                             instanceType: instanceType,
                             keyName: keyName,
@@ -67,6 +101,7 @@ namespace AWSHelper
                             shutdownBehavior: shutdownTermination ? ShutdownBehavior.Terminate : ShutdownBehavior.Stop,
                             associatePublicIpAddress: publicIp,
                             tags: tags).Result.Reservation.Instances.Single().InstanceId;
+                        }
 
                         if (nArgs.GetValueOrDefault("await-start").ToBoolOrDefault(false))
                         {
@@ -107,8 +142,9 @@ namespace AWSHelper
                         {
                             void TryRemoveTags()
                             {
-                                if (nArgs.GetValueOrDefault("try-delete-tags").ToBoolOrDefault(false))
+                                if (!nArgs.GetValueOrDefault("try-delete-tags").ToBoolOrDefault(false))
                                     return;
+
                                 var err = ec2.DeleteAllInstanceTags(i.InstanceId).CatchExceptionAsync().Result;
 
                                 if (err == null)
@@ -132,6 +168,53 @@ namespace AWSHelper
                         });
 
                         Console.WriteLine($"SUCCESS, All Instances Are Terminated.");
+                    }
+                    ; break;
+                case "describe-instance":
+                    {
+                        var name = nArgs.GetValueOrDefault("name");
+                        Instance instance = null;
+                        if (name != null)
+                        {
+                            instance = ec2.ListInstancesByName(name: name).Result
+                                .SingleOrDefault(x => (x.State.Name != InstanceStateName.Terminated) && (x.State.Name != InstanceStateName.ShuttingDown));
+
+                            if (instance == null)
+                                throw new Exception($"No non terminated instance with name '{name}' was found.");
+
+                            var property = nArgs.GetValueOrDefault("property");
+                            var output = nArgs.GetValueOrDefault("output");
+
+                            if (!property.IsNullOrEmpty())
+                            {
+                                
+                                var value = instance.GetType().GetProperty(property).GetValue(instance, null);
+                                var strValue = TypeEx.IsSimple(value.GetType().GetTypeInfo()) ? 
+                                    value.ToString() : 
+                                    value.JsonSerialize(Newtonsoft.Json.Formatting.Indented);
+
+                                Console.WriteLine($"Instance '{instance.InstanceId}' Property '{property}', Value: '{strValue}'.");
+
+                                if (!output.IsNullOrEmpty())
+                                {
+                                    Console.WriteLine($"Saving Property Value into output file: '{output}'...");
+                                    output.ToFileInfo().WriteAllText(strValue);
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Instance '{instance.InstanceId}' properties: {instance.JsonSerialize(Newtonsoft.Json.Formatting.Indented)}");
+                                if (!output.IsNullOrEmpty())
+                                {
+                                    Console.WriteLine($"Saving Properties into output file: '{output}'...");
+                                    output.ToFileInfo().WriteAllText(instance.JsonSerialize(Newtonsoft.Json.Formatting.Indented));
+                                }
+                            }
+                        }
+                        else
+                            throw new Exception("Only describe property by name option is available.");
+
+                        Console.WriteLine($"SUCCESS, instance '{instance.InstanceId}' properties were found.");
                     }
                     ; break;
                 case "help":
