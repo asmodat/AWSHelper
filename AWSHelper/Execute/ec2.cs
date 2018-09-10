@@ -60,15 +60,15 @@ namespace AWSHelper
                         }
 
                         string instanceId;
+                        var ebsOptymalized = nArgs.GetValueOrDefault("ebs-optymalized").ToBoolOrDefault();
 
-                        if (nArgs.Any(x => x.Key.IsWildcardMatch("ebs-*")))
+                        if (nArgs.Any(x => x.Key.IsWildcardMatch("ebs-root-")))
                         {
                             Console.WriteLine("Advanced Instance Creation Initiated...");
-                            var ebsOptymalized = nArgs["ebs-optymalized"].ToBoolOrDefault(true);
                             var rootDeviceName = nArgs["ebs-root-dev-name"];
                             var rootSnapshotId = nArgs.GetValueOrDefault("ebs-root-snapshot-id");
                             var rootVolumeSize = nArgs["ebs-root-volume-size"].ToInt32();
-                            var rootIOPS = nArgs["ebs-root-iops"].ToIntOrDefault(3600);
+                            var rootIOPS = nArgs["ebs-root-iops"].ToIntOrDefault(0);
                             var rootVolumeType = nArgs["ebs-root-volume-type"];
 
                             instanceId = ec2.CreateInstanceAsync(
@@ -100,6 +100,7 @@ namespace AWSHelper
                             roleName: role,
                             shutdownBehavior: shutdownTermination ? ShutdownBehavior.Terminate : ShutdownBehavior.Stop,
                             associatePublicIpAddress: publicIp,
+                            ebsOptymalized: ebsOptymalized,
                             tags: tags).Result.Reservation.Instances.Single().InstanceId;
                         }
 
