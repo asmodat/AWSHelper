@@ -3,6 +3,8 @@ using AWSWrapper.Route53;
 using AsmodatStandard.IO;
 using System.Collections.Generic;
 using AsmodatStandard.Extensions;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace AWSHelper
 {
@@ -22,13 +24,32 @@ namespace AWSHelper
                         recordType: nArgs["type"], 
                         throwIfNotFound: nArgs.GetValueOrDefault("throw-if-not-foud").ToBoolOrDefault(true)).Wait();
                     ; break;
+                case "get-record-sets":
+                    {
+                        Console.WriteLine("Loading Route53 Record Sets...");
+                        var result = helper.GetRecordSets().Result;
+                        Console.WriteLine("SUCCESS, Result:");
+                        Console.WriteLine(result.Select(x => (x.Key.Name, x.Value.Select(y => y))).JsonSerialize(Newtonsoft.Json.Formatting.Indented));
+                    }
+                    ; break;
+                case "list-resource-record-sets":
+                    {
+                        Console.WriteLine("Loading Route53 Resource Record Sets...");
+                        var result = helper.ListResourceRecordSetsAsync(nArgs["zone"]).Result;
+
+                        Console.WriteLine("SUCCESS, Result:");
+                        Console.WriteLine(result.JsonSerialize(Newtonsoft.Json.Formatting.Indented));
+                    }
+                    ; break;
                 case "help":
                 case "--help":
                 case "-help":
                 case "-h":
                 case "h":
                     HelpPrinter($"{args[0]}", "Amazon Route53",
-                    ("destroy-record", "Accepts params: zone, name, type, throw-if-not-foud (optional)"));
+                    ("destroy-record", "Accepts params: zone, name, type, throw-if-not-foud (optional)"),
+                    ("get-record-sets", "Accepts params: no params"),
+                    ("list-resource-record-sets", "Accepts params: zone"));
                     break;
                 default:
                     {

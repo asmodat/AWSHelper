@@ -69,6 +69,7 @@ namespace AWSHelper
                         var includePatterns = nArgs.GetValueOrDefault("include-file-patterns", "*")
                             .EscapedSplit(',').Where(x => !x.IsNullOrWhitespace()).ToArray();
                         var recursive = nArgs.GetValueOrDefault("recursive").ToBoolOrDefault(); //default false
+                        var force = nArgs.GetValueOrDefault("force").ToBoolOrDefault(true); //upload even if exists
 
                         if (!directory.Exists)
                             throw new Exception($"Can't upload directory '{directory?.FullName}' because it doesn't exists.");
@@ -110,7 +111,8 @@ namespace AWSHelper
                                     bucketName: bucket,
                                     key: destination,
                                     inputStream: stream,
-                                    keyId: null).Result;
+                                    keyId: null,
+                                    throwIfAlreadyExists: !force).Result;
 
                                 ++uploadedFiles;
                                 Console.WriteLine($"SUCCESS, File '{destination}' was uploaded, result: {result}");
