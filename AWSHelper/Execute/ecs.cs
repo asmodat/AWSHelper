@@ -32,6 +32,12 @@ namespace AWSHelper
                         nArgs["service"],
                         nArgs["timeout"].ToInt32()).Wait();
                     ; break;
+                case "describe-tasks":
+                    {
+                        var result = helper.DescribeTasksAsync(nArgs["cluster"],nArgs["tasks"].Split(',')).Result;
+                        Console.WriteLine(result.JsonSerialize(Newtonsoft.Json.Formatting.Indented));
+                    }
+                    ; break;
                 case "help":
                 case "--help":
                 case "-help":
@@ -41,7 +47,8 @@ namespace AWSHelper
                     ("destroy-cluster", "Accepts params: name"),
                     ("destroy-service", "Accepts params: cluster, service"),
                     ("destroy-task-definitions", "Accepts params: family"),
-                    ("await-service-start", "Accepts params: cluster, service, timeout"));
+                    ("await-service-start", "Accepts params: cluster, service, timeout"),
+                    ("describe-tasks", "Accepts params: tasks (array, comma separated guid's)"));
                     break;
                 default:
                     {

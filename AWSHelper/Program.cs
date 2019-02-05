@@ -13,7 +13,7 @@ namespace AWSHelper
 {
     public partial class Program
     {
-        private static readonly string _version = "0.10.1";
+        private static readonly string _version = "0.10.3";
 
         static void Main(string[] args)
         {
@@ -177,7 +177,7 @@ namespace AWSHelper
                     ("ec2", "Accepts params: create-instance, help"),
                     ("ecs", "Accepts params: destroy-cluster, destroy-service, destroy-task-definitions, await-service-start"),
                     ("ecr", "Accepts params: retag, delete, help"),
-                    ("elb", "Accepts params: destroy-load-balancer"),
+                    ("elb", "Accepts params: destroy-load-balancer, register-target-instance, deregister-target-instance"),
                     ("cloud-watch", "Accepts params: destroy-log-group"),
                     ("route53", "Accepts params: destroy-record, get-record-sets, list-resource-record-sets"),
                     ("iam", "Accepts params: create-policy, create-role, delete-policy, delete-role, help"),
