@@ -8,14 +8,15 @@ using AWSWrapper.ST;
 using Amazon.SecurityToken.Model;
 using System.Threading;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace AWSHelper
 {
     public partial class Program
     {
-        private static readonly string _version = "0.10.3";
+        private static readonly string _version = "0.11.0";
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v{_version} by Asmodat ***");
 
@@ -32,7 +33,7 @@ namespace AWSHelper
 
             var mode = nArgs.ContainsKey("execution-mode") ? nArgs["execution-mode"]?.ToLower() : null;
 
-            ExecuteWithMode(mode, args);
+            await ExecuteWithMode(mode, args);
 
             Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Success");
         }
@@ -40,7 +41,7 @@ namespace AWSHelper
         /// <summary>
         /// returns value indicating wheather or not execution suceeded otherwise throws
         /// </summary>
-        private static bool ExecuteWithMode(string executionMode, string[] args)
+        private static async Task<bool> ExecuteWithMode(string executionMode, string[] args)
         {
             var nArgs = CLIHelper.GetNamedArguments(args);
             Console.WriteLine($"Execution mode: {executionMode ?? "not-defined"}");
@@ -49,14 +50,14 @@ namespace AWSHelper
             {
                 if (executionMode == "debug")
                 {
-                    Execute(args);
+                    await Execute(args);
                     return true;
                 }
                 else if (executionMode == "silent-errors")
                 {
                     try
                     {
-                        Execute(args);
+                        await Execute(args);
                         return true;
                     }
                     catch (Exception ex)
@@ -83,7 +84,7 @@ namespace AWSHelper
 
                         try
                         {
-                            Execute(args);
+                            await Execute(args);
                             return true;
                         }
                         catch(Exception ex)
@@ -108,7 +109,7 @@ namespace AWSHelper
             {
                 try
                 {
-                    Execute(args);
+                    await Execute(args);
                     return true;
                 }
                 catch
@@ -119,15 +120,15 @@ namespace AWSHelper
             }
         }
 
-        private static void Execute(string[] args)
+        private static async Task Execute(string[] args)
         {
             var nArgs = CLIHelper.GetNamedArguments(args);
 
             Credentials credentials = null;
             if (nArgs.ContainsKey("assume-role"))
             {
-                var role = (new IAMHelper(null)).GetRoleByNameAsync(name: nArgs["assume-role"]).Result;
-                var result = (new STHelper(null)).AssumeRoleAsync(role.Arn).Result;
+                var role = await (new IAMHelper(null)).GetRoleByNameAsync(name: nArgs["assume-role"]);
+                var result = await (new STHelper(null)).AssumeRoleAsync(role.Arn);
                 credentials = result.Credentials;
             }
 
@@ -159,6 +160,9 @@ namespace AWSHelper
                     break;
                 case "kms":
                     executeKMS(args, credentials);
+                    break;
+                case "sm":
+                        await executeSM(args, credentials);
                     break;
                 case "fargate":
                     executeFargate(args, credentials);

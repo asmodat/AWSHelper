@@ -75,18 +75,19 @@ namespace AWSHelper
                             imageId: imageId,
                             instanceType: instanceType,
                             keyName: keyName,
-                            securityGroupId: securityGroupId,
+                            securityGroupIDs: new string[] { securityGroupId },
                             subnetId: subnet,
                             roleName: role,
                             shutdownBehavior: shutdownTermination ? ShutdownBehavior.Terminate : ShutdownBehavior.Stop,
                             associatePublicIpAddress: publicIp,
-                            EbsOptymalized: ebsOptymalized,
+                            ebsOptymalized: ebsOptymalized,
                             rootDeviceName: rootDeviceName,
                             rootSnapshotId: rootSnapshotId,
                             rootVolumeSize: rootVolumeSize,
                             rootIOPS: rootIOPS,
                             rootVolumeType: rootVolumeType,
-                            tags: tags).Result.Reservation.Instances.Single().InstanceId;
+                            tags: tags
+                            ).Result.Reservation.Instances.Single().InstanceId;
                         }
                         else
                         {

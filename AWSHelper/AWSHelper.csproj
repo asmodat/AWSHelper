@@ -13,6 +13,7 @@
     <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
     <Company>Asmodat</Company>
     <Authors>Asmodat</Authors>
+    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,23 +21,23 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.AutoScaling" Version="3.3.8.16" />
-    <PackageReference Include="AWSSDK.AutoScalingPlans" Version="3.3.2.14" />
-    <PackageReference Include="AWSSDK.CloudFormation" Version="3.3.13.14" />
-    <PackageReference Include="AWSSDK.CloudWatch" Version="3.3.10.14" />
-    <PackageReference Include="AWSSDK.CloudWatchLogs" Version="3.3.7.14" />
-    <PackageReference Include="AWSSDK.Core" Version="3.3.31.5" />
-    <PackageReference Include="AWSSDK.S3" Version="3.3.31.13" />
-    <PackageReference Include="AWSSDK.EC2" Version="3.3.80.2" />
-    <PackageReference Include="AWSSDK.ECR" Version="3.3.5" />
-    <PackageReference Include="AWSSDK.ECS" Version="3.3.21.15" />
-    <PackageReference Include="AWSSDK.ElasticLoadBalancing" Version="3.3.3.35" />
-    <PackageReference Include="AWSSDK.ElasticLoadBalancingV2" Version="3.3.13" />
-    <PackageReference Include="AWSSDK.IdentityManagement" Version="3.3.9.13" />
-    <PackageReference Include="AWSSDK.ResourceGroups" Version="3.3.3.16" />
-    <PackageReference Include="AWSSDK.Route53" Version="3.3.18.12" />
-    <PackageReference Include="AWSSDK.SimpleNotificationService" Version="3.3.3.16" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="AWSSDK.AutoScaling" Version="3.3.100.79" />
+    <PackageReference Include="AWSSDK.AutoScalingPlans" Version="3.3.100.78" />
+    <PackageReference Include="AWSSDK.CloudFormation" Version="3.3.100.78" />
+    <PackageReference Include="AWSSDK.CloudWatch" Version="3.3.102.33" />
+    <PackageReference Include="AWSSDK.CloudWatchLogs" Version="3.3.101.26" />
+    <PackageReference Include="AWSSDK.Core" Version="3.3.103.42" />
+    <PackageReference Include="AWSSDK.S3" Version="3.3.104.30" />
+    <PackageReference Include="AWSSDK.EC2" Version="3.3.131" />
+    <PackageReference Include="AWSSDK.ECR" Version="3.3.101.26" />
+    <PackageReference Include="AWSSDK.ECS" Version="3.3.109.1" />
+    <PackageReference Include="AWSSDK.ElasticLoadBalancing" Version="3.3.100.78" />
+    <PackageReference Include="AWSSDK.ElasticLoadBalancingV2" Version="3.3.102.41" />
+    <PackageReference Include="AWSSDK.IdentityManagement" Version="3.3.103.31" />
+    <PackageReference Include="AWSSDK.ResourceGroups" Version="3.3.101.71" />
+    <PackageReference Include="AWSSDK.Route53" Version="3.3.102.24" />
+    <PackageReference Include="AWSSDK.SimpleNotificationService" Version="3.3.101.67" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
   </ItemGroup>
 
   <ItemGroup>

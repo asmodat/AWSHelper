@@ -5,6 +5,7 @@ using System.Linq;
 using AWSWrapper.EC2;
 using AsmodatStandard.Extensions.Collections;
 using AsmodatStandard.Extensions;
+using System.Collections.Generic;
 
 namespace AWSHelper
 {
@@ -30,7 +31,11 @@ namespace AWSHelper
                             targetGroupName: tgName,
                             throwIfNotFound: true).Result;
 
-                        var instance = ec2.ListInstancesByName(name: instanceName).Result.SingleOrDefault();
+                        var instance = ec2.ListInstancesByName(name: instanceName, 
+                            stateExclude: new List<Amazon.EC2.InstanceStateName>() {
+                                Amazon.EC2.InstanceStateName.ShuttingDown,
+                                Amazon.EC2.InstanceStateName.Terminated }
+                            ).Result.SingleOrDefault();
 
                         if(instance == null)
                             throw new Exception($"Could not find instance with name '{instanceName}' or found more then one.");
@@ -48,7 +53,11 @@ namespace AWSHelper
                             targetGroupName: tgName,
                             throwIfNotFound: true).Result;
 
-                        var instance = ec2.ListInstancesByName(name: instanceName).Result.SingleOrDefault();
+                        var instance = ec2.ListInstancesByName(name: instanceName,
+                            stateExclude: new List<Amazon.EC2.InstanceStateName>() {
+                                Amazon.EC2.InstanceStateName.ShuttingDown,
+                                Amazon.EC2.InstanceStateName.Terminated }
+                            ).Result.SingleOrDefault();
 
                         if (instance == null)
                             throw new Exception($"Could not find instance with name '{instanceName}' or found more then one.");
