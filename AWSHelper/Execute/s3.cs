@@ -10,12 +10,14 @@ using AsmodatStandard.Extensions.IO;
 using System.Linq;
 using System.Collections.Generic;
 using AsmodatStandard.Extensions.Threading;
+using AWSWrapper.S3.Models;
+using System.Threading.Tasks;
 
 namespace AWSHelper
 {
     public partial class Program
     {
-        private static void executeS3(string[] args, Credentials credentials)
+        private static async Task executeS3(string[] args, Credentials credentials)
         {
             var nArgs = CLIHelper.GetNamedArguments(args);
             var helper = new S3Helper(credentials);
@@ -318,6 +320,62 @@ namespace AWSHelper
                         Console.WriteLine($"SUCCESS, removed {counter} files.");
                     }
                     ; break;
+                case "hash-download":
+                    {
+                        var sync = nArgs.GetOrThrow("sync")?.ToDirectoryInfo();
+
+                        if (sync?.TryCreate() != true)
+                            throw new Exception($"Sync directory '{sync?.FullName ?? "undefined"}' was not found or could not be created.");
+
+                        var st = new SyncTarget()
+                        {
+                            id = nArgs.GetValueOrDefault("id", GuidEx.SlimUID()),
+                            source = nArgs.GetOrThrow("source"),
+                            status = nArgs.GetOrThrow("status"),
+                            destination = nArgs.GetOrThrow("destination"),
+                            sync = sync.FullName,
+                            verbose = nArgs.GetValueOrDefault("verbose").ToBoolOrDefault(true),
+                            profile = nArgs.GetValueOrDefault("profile",""),
+                            parallelism = nArgs.GetValueOrDefault("parallelism").ToIntOrDefault(2),
+                            maxTimestamp = nArgs.GetValueOrDefault("maxTimestamp").ToLongOrDefault(20991230121314),
+                            minTimestamp = nArgs.GetValueOrDefault("minTimestamp").ToLongOrDefault(0),
+                            wipe = nArgs.GetOrThrow("wipe").ToBoolOrDefault(false),
+                            retry = nArgs.GetValueOrDefault("retry").ToIntOrDefault(5),
+                            timeout = nArgs.GetValueOrDefault("timeout").ToIntOrDefault(60000),
+                            type = SyncTarget.types.download,
+                            throwIfSourceNotFound = nArgs.GetValueOrDefault("throwIfSourceNotFound").ToBoolOrDefault(true),
+                        };
+
+                        var s3hs = new S3HashStore(st);
+                        var result = await s3hs.Process();
+                        Console.Write(result.JsonSerialize());
+                    }
+                    ; break;
+                case "hash-upload":
+                    {
+                        var st = new SyncTarget()
+                        {
+                            id = nArgs.GetValueOrDefault("id", GuidEx.SlimUID()),
+                            source = nArgs.GetOrThrow("source"),
+                            status = nArgs.GetOrThrow("status"),
+                            destination = nArgs.GetOrThrow("destination"),
+                            profile = nArgs.GetValueOrDefault("profile", ""),
+                            verbose = nArgs.GetValueOrDefault("verbose").ToBoolOrDefault(true),
+                            recursive = nArgs.GetOrThrow("recursive").ToBoolOrDefault(false),
+                            parallelism = nArgs.GetValueOrDefault("parallelism").ToIntOrDefault(2),
+                            retry = nArgs.GetValueOrDefault("retry").ToIntOrDefault(5),
+                            rotation = nArgs.GetOrThrow("rotation").ToInt32(),
+                            retention = nArgs.GetValueOrDefault("retention").ToIntOrDefault(1), // retention 1 second
+                            timeout = nArgs.GetValueOrDefault("timeout").ToIntOrDefault(180000), // 3 minutes
+                            type = SyncTarget.types.upload,
+                            throwIfSourceNotFound = nArgs.GetValueOrDefault("throwIfSourceNotFound").ToBoolOrDefault(true),
+                        };
+
+                        var s3hs = new S3HashStore(st);
+                        var result = await s3hs.Process();
+                        Console.Write(result.JsonSerialize());
+                    }
+                    ; break;
                 case "help":
                 case "--help":
                 case "-help":
@@ -327,7 +385,9 @@ namespace AWSHelper
                     ("upload-text", "Accepts params: bucket, path, key, text"),
                     ("download-text", "Accepts params: bucket, path, etag (optional), version (optional)"),
                     ("delete-object", "Accepts params: bucket, path"),
-                    ("object-exists", "Accepts params: bucket, path"));
+                    ("object-exists", "Accepts params: bucket, path"),
+                    ("hash-upload", "Accepts params: id (optional-UID), profile, sourc, status, sync, verbose (optional), parallelism (optional), maxTimestamp (optional), minTimestamp (optional), retry (optional), wipe, timeout (optional: 60000), throwIfSourceNotFound (optional: true)"),
+                    ("hash-download", "Accepts params: id (optional), profile, sourc, status, destination, recursive, verbose (optional), parallelism (optional), wipe, timeout (optional: 180000), retention, rotation, throwIfSourceNotFound (optional: true)"));
                     break;
                 default:
                     {

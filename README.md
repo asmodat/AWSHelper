@@ -27,3 +27,33 @@ dotnet $AWSHelper ecs await-service-start  --service="service-name" --timeout=12
 
 Deleting Route53 Records
 dotnet $AWSHelper route53 destroy-record --name="www.subnet.domain." --type="CNAME" --zone="zone_id"
+
+
+## Hash Store
+
+### Download
+```
+AWSHelper s3 hash-download --id="job-identifier" \
+ --source="bucket_name/hash-files" \
+ --status="bucket_name/status" \
+ --destination="tmp/local-output-dir" \
+ --sync="tmp/download-status-dir" \
+ --wipe=true 
+```
+
+### Upload
+
+> retention - time in seconds after which status file becomes obsolete
+> rotation - maximum number of status files to be kept
+
+```
+AWSHelper s3 hash-download --id="job-identifier" \
+ --destination="bucket_name/hash-files" \
+ --status="bucket_name/status" \
+ --source="tmp/local-output-dir" \
+ --sync="tmp/upload-status-dir" \
+ --recursive=true \
+ --rotation=31 \
+ --retention=1 \ 
+ --wipe=true 
+```

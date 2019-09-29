@@ -39,15 +39,24 @@ namespace AWSHelper
 
                         output.WriteAllText(result);
 
-                        if (!silent)
+                        if (!_silent)
                             Console.WriteLine($"{result ?? "undefined"}");
 
+                        return true;
+                    }
+                case "show-secret":
+                    {
+                        var name = nArgs["name"];
+                        var key = nArgs.GetValueOrDefault("key", null);
+                        var result = await helper.GetSecret(name: name, key: key);
+                        Console.Write($"{result ?? "undefined"}");
                         return true;
                     }
                 case "help":
                     {
                         HelpPrinter($"{args[0]}", "Secrets Manager",
-                            ("get-secret", "Accepts params: name, key, output, silent, force"));
+                            ("get-secret", "Accepts params: name, key (optional), output, silent, force"),
+                            ("show-secret", "Accepts params: name, key (optional)"));
                         return true;
                     }
                 default:

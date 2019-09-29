@@ -9,6 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AWSWrapper", "..\AWSWrapper
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Asmodat Standard", "..\Asmodat-Standard\Asmodat Standard\Asmodat Standard.csproj", "{755D1141-20ED-4F9E-A809-AC0826BD3A46}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3D4B3285-9CD9-49C0-A3A1-5E97586FF57E}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
