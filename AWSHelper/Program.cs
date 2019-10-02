@@ -14,7 +14,7 @@ namespace AWSHelper
 {
     public partial class Program
     {
-        private static readonly string _version = "0.11.3";
+        private static readonly string _version = "0.11.5";
         private static bool _silent = false;
 
         static async Task Main(string[] args)

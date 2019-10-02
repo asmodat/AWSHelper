@@ -335,11 +335,13 @@ namespace AWSHelper
                             destination = nArgs.GetOrThrow("destination"),
                             sync = sync.FullName,
                             verbose = nArgs.GetValueOrDefault("verbose").ToBoolOrDefault(true),
+                            verify = nArgs.GetValueOrDefault("verify").ToBoolOrDefault(false),
                             profile = nArgs.GetValueOrDefault("profile",""),
                             parallelism = nArgs.GetValueOrDefault("parallelism").ToIntOrDefault(2),
                             maxTimestamp = nArgs.GetValueOrDefault("maxTimestamp").ToLongOrDefault(20991230121314),
                             minTimestamp = nArgs.GetValueOrDefault("minTimestamp").ToLongOrDefault(0),
                             wipe = nArgs.GetOrThrow("wipe").ToBoolOrDefault(false),
+                            compress = nArgs.GetValueOrDefault("compress").ToBoolOrDefault(false),
                             retry = nArgs.GetValueOrDefault("retry").ToIntOrDefault(5),
                             timeout = nArgs.GetValueOrDefault("timeout").ToIntOrDefault(60000),
                             type = SyncTarget.types.download,
@@ -353,11 +355,17 @@ namespace AWSHelper
                     ; break;
                 case "hash-upload":
                     {
+                        var sync = nArgs.GetOrThrow("sync")?.ToDirectoryInfo();
+
+                        if (sync?.TryCreate() != true)
+                            throw new Exception($"Sync directory '{sync?.FullName ?? "undefined"}' was not found or could not be created.");
+
                         var st = new SyncTarget()
                         {
                             id = nArgs.GetValueOrDefault("id", GuidEx.SlimUID()),
                             source = nArgs.GetOrThrow("source"),
                             status = nArgs.GetOrThrow("status"),
+                            sync = sync.FullName,
                             destination = nArgs.GetOrThrow("destination"),
                             profile = nArgs.GetValueOrDefault("profile", ""),
                             verbose = nArgs.GetValueOrDefault("verbose").ToBoolOrDefault(true),
@@ -366,6 +374,7 @@ namespace AWSHelper
                             retry = nArgs.GetValueOrDefault("retry").ToIntOrDefault(5),
                             rotation = nArgs.GetOrThrow("rotation").ToInt32(),
                             retention = nArgs.GetValueOrDefault("retention").ToIntOrDefault(1), // retention 1 second
+                            compress = nArgs.GetValueOrDefault("compress").ToBoolOrDefault(false),
                             timeout = nArgs.GetValueOrDefault("timeout").ToIntOrDefault(180000), // 3 minutes
                             type = SyncTarget.types.upload,
                             throwIfSourceNotFound = nArgs.GetValueOrDefault("throwIfSourceNotFound").ToBoolOrDefault(true),
@@ -386,8 +395,8 @@ namespace AWSHelper
                     ("download-text", "Accepts params: bucket, path, etag (optional), version (optional)"),
                     ("delete-object", "Accepts params: bucket, path"),
                     ("object-exists", "Accepts params: bucket, path"),
-                    ("hash-upload", "Accepts params: id (optional-UID), profile, sourc, status, sync, verbose (optional), parallelism (optional), maxTimestamp (optional), minTimestamp (optional), retry (optional), wipe, timeout (optional: 60000), throwIfSourceNotFound (optional: true)"),
-                    ("hash-download", "Accepts params: id (optional), profile, sourc, status, destination, recursive, verbose (optional), parallelism (optional), wipe, timeout (optional: 180000), retention, rotation, throwIfSourceNotFound (optional: true)"));
+                    ("hash-upload", "Accepts params: id (optional-UID), profile, sourc, status, sync, verbose (optional), parallelism (optional), maxTimestamp (optional), minTimestamp (optional), retry (optional), compress (optional:false), wipe, verify (optional:false), timeout (optional: 60000), throwIfSourceNotFound (optional: true)"),
+                    ("hash-download", "Accepts params: id (optional), profile, sourc, status, sync, destination, recursive, verbose (optional), parallelism (optional), wipe, timeout (optional: 180000), retention, rotation, compress (optional:false), throwIfSourceNotFound (optional: true)"));
                     break;
                 default:
                     {
