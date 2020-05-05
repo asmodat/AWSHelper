@@ -11,12 +11,13 @@ using static AWSWrapper.EC2.EC2Helper;
 using Amazon.EC2.Model;
 using AsmodatStandard.Extensions.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace AWSHelper
 {
     public partial class Program
     {
-        private static void executeEC2(string[] args, Credentials credentials)
+        private static async Task executeEC2(string[] args, Credentials credentials)
         {
             var nArgs = CLIHelper.GetNamedArguments(args);
 

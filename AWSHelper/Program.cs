@@ -14,32 +14,36 @@ namespace AWSHelper
 {
     public partial class Program
     {
-        private static readonly string _version = "0.11.5";
+        private static readonly string _version = "0.12.1";
         private static bool _silent = false;
+
+        public static void WriteLine(string s)
+        {
+            if (!_silent)
+                Console.WriteLine(s);
+        }
 
         static async Task Main(string[] args)
         {
             var nArgs = CLIHelper.GetNamedArguments(args);
             _silent = nArgs.GetValueOrDefault("silent").ToBoolOrDefault(false);
 
-            if(!_silent)
-                Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v{_version} by Asmodat ***");
+            WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] *** Started AWSHelper v{_version} by Asmodat ***");
 
             if (args.Length < 1)
             {
-                Console.WriteLine("Try 'help' to find out list of available commands.");
+                WriteLine("Try 'help' to find out list of available commands.");
                 throw new Exception("At least 1 argument must be specified.");
             }
 
-            if (!_silent && args.Length > 1)
-                Console.WriteLine($"Executing command: '{args[0]} {args[1]}' Arguments: \n{nArgs.JsonSerialize(Newtonsoft.Json.Formatting.Indented)}\n");
+            if (args.Length > 1)
+                WriteLine($"Executing command: '{args[0]} {args[1]}' Arguments: \n{nArgs.JsonSerialize(Newtonsoft.Json.Formatting.Indented)}\n");
 
             var mode = nArgs.ContainsKey("execution-mode") ? nArgs["execution-mode"]?.ToLower() : null;
 
             await ExecuteWithMode(mode, args);
 
-            if (!_silent)
-                Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Success");
+            WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Success");
         }
 
         /// <summary>
@@ -48,8 +52,7 @@ namespace AWSHelper
         private static async Task<bool> ExecuteWithMode(string executionMode, string[] args)
         {
             var nArgs = CLIHelper.GetNamedArguments(args);
-            if (!_silent)
-                Console.WriteLine($"Execution mode: {executionMode ?? "not-defined"}");
+            WriteLine($"Execution mode: {executionMode ?? "not-defined"}");
 
             if (!executionMode.IsNullOrEmpty())
             {
@@ -67,8 +70,7 @@ namespace AWSHelper
                     }
                     catch (Exception ex)
                     {
-                        if (!_silent)
-                            Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Failure, Error Message: {ex.JsonSerializeAsPrettyException()}");
+                        WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Failure, Error Message: {ex.JsonSerializeAsPrettyException()}");
                         return false;
                     }
                 }
@@ -82,13 +84,11 @@ namespace AWSHelper
                     bool throws = (nArgs.ContainsKey("retry-throws") ? nArgs["retry-throws"] : "true").ToBoolOrDefault(true);
                     int timeout = (nArgs.ContainsKey("retry-timeout") ? nArgs["retry-timeout"] : $"{60 * 3600}").ToIntOrDefault(60 * 3600);
 
-                    if (!_silent)
-                        Console.WriteLine($"Execution with retry: Max: {times}, Delay: {delay} [ms], Throws: {(throws ? "Yes" : "No")}, Timeout: {timeout} [s]");
+                    WriteLine($"Execution with retry: Max: {times}, Delay: {delay} [ms], Throws: {(throws ? "Yes" : "No")}, Timeout: {timeout} [s]");
 
                     do
                     {
-                        if (!_silent)
-                            Console.WriteLine($"Execution trial: {counter}/{times}, Elapsed/Timeout: {sw.ElapsedMilliseconds/1000}/{timeout} [s]");
+                        WriteLine($"Execution trial: {counter}/{times}, Elapsed/Timeout: {sw.ElapsedMilliseconds/1000}/{timeout} [s]");
 
                         try
                         {
@@ -97,14 +97,12 @@ namespace AWSHelper
                         }
                         catch(Exception ex)
                         {
-                            if (!_silent)
-                                Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Failure, Error Message: {ex.JsonSerializeAsPrettyException()}");
+                            WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Failure, Error Message: {ex.JsonSerializeAsPrettyException()}");
 
                             if ((sw.ElapsedMilliseconds / 1000) >= timeout || (throws && counter == times))
                                 throw;
 
-                            if (!_silent)
-                                Console.WriteLine($"Execution retry delay: {delay} [ms]");
+                            WriteLine($"Execution retry delay: {delay} [ms]");
                             Thread.Sleep(delay);
                         }
                     }
@@ -124,7 +122,7 @@ namespace AWSHelper
                 }
                 catch
                 {
-                    Console.WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Failure");
+                    WriteLine($"[{TickTime.Now.ToLongDateTimeString()}] Failure");
                     throw;
                 }
             }
@@ -145,7 +143,7 @@ namespace AWSHelper
             switch (args[0]?.ToLower()?.TrimStart("-"))
             {
                 case "ec2":
-                    executeEC2(args, credentials);
+                    await executeEC2(args, credentials);
                     break;
                 case "ecs":
                     executeECS(args);
@@ -160,7 +158,7 @@ namespace AWSHelper
                     executeCW(args);
                     break;
                 case "route53":
-                    executeR53(args);
+                    await executeR53(args);
                     break;
                 case "iam":
                     executeIAM(args, credentials);
@@ -193,7 +191,7 @@ namespace AWSHelper
                     ("ecr", "Accepts params: retag, delete, help"),
                     ("elb", "Accepts params: destroy-load-balancer, register-target-instance, deregister-target-instance"),
                     ("cloud-watch", "Accepts params: destroy-log-group"),
-                    ("route53", "Accepts params: destroy-record, get-record-sets, list-resource-record-sets"),
+                    ("route53", "Accepts params: destroy-record, get-record-sets, list-resource-record-sets, upsert-cname-record"),
                     ("iam", "Accepts params: create-policy, create-role, delete-policy, delete-role, help"),
                     ("s3", "Accepts params: upload-text, hash-upload, hash-download, help"),
                     ("kms", "Accepts params: create-grant, remove-grant, help"),

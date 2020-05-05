@@ -27,14 +27,14 @@ namespace AWSHelper
                 case "upload-text":
                     {
                         var keyId = nArgs.GetValueOrDefault("key");
-                        var result = helper.UploadTextAsync(
+                        var result = await helper.UploadTextAsync(
                             bucketName: nArgs["bucket"],
                             key: nArgs["path"],
                             text: nArgs["text"],
                             keyId: keyId,
-                            encoding: Encoding.UTF8).Result;
+                            encoding: Encoding.UTF8);
 
-                        Console.WriteLine($"SUCCESS, Text Saved, Bucket {nArgs["bucket"]}, Path {nArgs["path"]}, Encryption Key {keyId}, ETag: {result}");
+                        WriteLine($"SUCCESS, Text Saved, Bucket {nArgs["bucket"]}, Path {nArgs["path"]}, Encryption Key {keyId}, ETag: {result}");
                     }
                     ; break;
                 case "upload-object":
@@ -47,13 +47,13 @@ namespace AWSHelper
                         using (var stream = file.OpenRead())
                         {
                             var keyId = nArgs.GetValueOrDefault("key");
-                            var result = helper.UploadStreamAsync(
+                            var result = await helper.UploadStreamAsync(
                                 bucketName: nArgs["bucket"],
                                 key: nArgs["path"],
                                 inputStream: stream,
-                                keyId: keyId).Result;
+                                keyId: keyId);
 
-                            Console.WriteLine($"SUCCESS, File was uploaded, result: {result}");
+                            WriteLine($"SUCCESS, File was uploaded, result: {result}");
                         }
                     }
                     ; break;
@@ -83,10 +83,10 @@ namespace AWSHelper
                         var directories = directory.GetDirectories(recursive: recursive).Merge(directory);
 
                         if (files.IsNullOrEmpty())
-                            Console.WriteLine($"No files were found in directory '{directory?.FullName}'");
+                            WriteLine($"No files were found in directory '{directory?.FullName}'");
 
                         if (directories.IsNullOrEmpty())
-                            Console.WriteLine($"No sub-directories were found in directory '{directory?.FullName}'");
+                            WriteLine($"No sub-directories were found in directory '{directory?.FullName}'");
 
                         var prefix = directory.FullName;
                         int uploadedFiles = 0;
@@ -97,7 +97,7 @@ namespace AWSHelper
                         {
                             if(excludeFiles.Any(x => x.FullName == file.FullName) || excludeDirectories.Any(x => file.HasSubDirectory(x)))
                             {
-                                Console.WriteLine($"Skipping following File Upload due to exclude-files/directories parameter: '{file.FullName}'");
+                                WriteLine($"Skipping following File Upload due to exclude-files/directories parameter: '{file.FullName}'");
                                 return;
                             }
 
@@ -105,7 +105,7 @@ namespace AWSHelper
                                 file.FullName.TrimStartSingle(prefix).TrimStart('/', '\\').Replace("\\", "/");
                             destination = destination.TrimStart("/"); //in case path was null or '/'
 
-                            Console.WriteLine($"Uploading '{file.FullName}' => '{bucket}/{destination}' ...");
+                            WriteLine($"Uploading '{file.FullName}' => '{bucket}/{destination}' ...");
 
                             using (var stream = file.OpenRead())
                             {
@@ -117,19 +117,19 @@ namespace AWSHelper
                                     throwIfAlreadyExists: !force).Result;
 
                                 ++uploadedFiles;
-                                Console.WriteLine($"SUCCESS, File '{destination}' was uploaded, result: {result}");
+                                WriteLine($"SUCCESS, File '{destination}' was uploaded, result: {result}");
                             }
                         });
 
                         if (nArgs.GetValueOrDefault("create-directories").ToBoolOrDefault(false))
                         {
-                            Console.WriteLine("Creating Directories...");
+                            WriteLine("Creating Directories...");
 
                             directories.ParallelForEach(dir =>
                             {
                                 if (excludeDirectories.Any(x => x.FullName == dir.FullName) || excludeDirectories.Any(x => dir.HasSubDirectory(x)))
                                 {
-                                    Console.WriteLine($"Skipping following Directory Creation due to exclude-files/directories parameter: '{dir.FullName}'");
+                                    WriteLine($"Skipping following Directory Creation due to exclude-files/directories parameter: '{dir.FullName}'");
                                     return;
                                 }
 
@@ -139,17 +139,17 @@ namespace AWSHelper
 
                                 if (destination.IsNullOrEmpty() || helper.ObjectExistsAsync(bucket, key: destination + "/").Result)
                                 {
-                                    Console.WriteLine($"Directory '{destination}' already exists or is an empty destination.");
+                                    WriteLine($"Directory '{destination}' already exists or is an empty destination.");
                                     return;
                                 }
 
                                 helper.CreateDirectory(bucketName: bucket, path: destination).Await();
                                 ++uploadedDirectories;
-                                Console.WriteLine($"Created empty directory '{destination}'.");
+                                WriteLine($"Created empty directory '{destination}'.");
                             });
                         }
 
-                        Console.WriteLine($"SUCCESS, uploaded {uploadedFiles} files and {uploadedDirectories} directories.");
+                        WriteLine($"SUCCESS, uploaded {uploadedFiles} files and {uploadedDirectories} directories.");
                     }
                     ; break;
                 case "download-text":
@@ -161,31 +161,36 @@ namespace AWSHelper
                             version: nArgs.GetValueOrDefault("version"),
                             encoding: Encoding.UTF8).Result;
 
-                        Console.WriteLine($"SUCCESS, Text Read, Bucket: {nArgs["bucket"]}, Path: {nArgs.GetValueOrDefault("path")}, Version: {nArgs.GetValueOrDefault("version")}, eTag: {nArgs.GetValueOrDefault("etag")}, Read: {result?.Length ?? 0} [characters], Result:");
+                        WriteLine($"SUCCESS, Text Read, Bucket: {nArgs["bucket"]}, Path: {nArgs.GetValueOrDefault("path")}, Version: {nArgs.GetValueOrDefault("version")}, eTag: {nArgs.GetValueOrDefault("etag")}, Read: {result?.Length ?? 0} [characters], Result:");
                         Console.WriteLine(result);
                     }
                     ; break;
                 case "delete-object":
                     {
+                        var bucket = nArgs["bucket"];
+                        var path = nArgs["path"];
                         var result = helper.DeleteVersionedObjectAsync(
-                            bucketName: nArgs["bucket"],
-                            key: nArgs["path"],
+                            bucketName: bucket,
+                            key: path,
                             throwOnFailure: true).Result;
 
-                        Console.WriteLine($"SUCCESS, Text Read, Bucket: {nArgs["bucket"]}, Path: {nArgs.GetValueOrDefault("path")}, Deleted: '{(result ? "true" : "false")}'");
-                        Console.WriteLine(result);
+                        if (!result && nArgs.GetValueOrDefault("throw-if-not-deleted").ToBoolOrDefault(false))
+                            throw new Exception($"File was NOT deleted, Bucket: {bucket}, Path: {path}");
+
+                        WriteLine($"SUCCESS, Text Read, Bucket: {bucket}, Path: {path}, Deleted: '{(result ? "true" : "false")}'");
+                        Console.Write(result);
                     }
                     ; break;
                 case "object-exists":
                     {
-                        var result = helper.ObjectExistsAsync(
+                        var exists = helper.ObjectExistsAsync(
                             bucketName: nArgs["bucket"],
                             key: nArgs["path"]).Result;
 
-                        if (nArgs.GetValueOrDefault("throw-if-not-found").ToBoolOrDefault(false))
+                        if (!exists && nArgs.GetValueOrDefault("throw-if-not-found").ToBoolOrDefault(false))
                             throw new Exception($"File Does NOT exists, Bucket: {nArgs["bucket"]}, Path: {nArgs["path"]}");
 
-                        Console.WriteLine($"SUCCESS, Object Exists Check, Bucket: {nArgs["bucket"]}, Path: {nArgs["path"]}, Exists: {(result ? "true" : "false")}");
+                        WriteLine($"SUCCESS, Object Exists Check, Bucket: {nArgs["bucket"]}, Path: {nArgs["path"]}, Exists: {(exists ? "true" : "false")}");
                     }
                     ; break;
                 case "download-object":
@@ -197,7 +202,7 @@ namespace AWSHelper
                         if (Directory.Exists(output))
                             output = Path.Combine(output, path.Contains("/") ? path.SplitByLast('/')[1] : path);
 
-                        Console.WriteLine($"Started Download '{bucket}' -> '{output}'...");
+                        WriteLine($"Started Download '{bucket}' -> '{output}'...");
 
                         var result = helper.DownloadObjectAsync(
                             bucketName: nArgs["bucket"],
@@ -207,7 +212,7 @@ namespace AWSHelper
                             outputFile: output,
                             @override: nArgs.GetValueOrDefault("override").ToBoolOrDefault(false)).Result;
 
-                        Console.WriteLine($"SUCCESS, Text Read, Bucket: {bucket}, Path: {path}, Version: {nArgs.GetValueOrDefault("version")}, eTag: {nArgs.GetValueOrDefault("etag")}, Read: {result?.Length ?? 0} [B], Result: {result}");
+                        WriteLine($"SUCCESS, Text Read, Bucket: {bucket}, Path: {path}, Version: {nArgs.GetValueOrDefault("version")}, eTag: {nArgs.GetValueOrDefault("etag")}, Read: {result?.Length ?? 0} [B], Result: {result}");
                     }
                     ; break;
                 case "download-folder":
@@ -231,7 +236,7 @@ namespace AWSHelper
                         var list = helper.ListObjectsAsync(bucket, prefix: path == "/" ? null : path).Result;
 
                         if (list.IsNullOrEmpty())
-                            Console.WriteLine($"Coudn't find any object in bucket '{bucket}' with prefix '{path}'.");
+                            WriteLine($"Coudn't find any object in bucket '{bucket}' with prefix '{path}'.");
 
                         list.ParallelForEach(o =>
                         {
@@ -240,7 +245,7 @@ namespace AWSHelper
                             var excludeMatch = exclude?.FirstOrDefault(ex => baseKey.IsWildcardMatch(ex));
                             if (excludeMatch != null)
                             {
-                                Console.WriteLine($"Skipping download of object: '{o.Key}' due to exclude of '{excludeMatch}'.");
+                                WriteLine($"Skipping download of object: '{o.Key}' due to exclude of '{excludeMatch}'.");
                                 return;
                             }
 
@@ -249,7 +254,7 @@ namespace AWSHelper
 
                             if (!recursive && nonRecursivefileName.Count("/") > 0)
                             {
-                                Console.WriteLine($"Object '{o.Key}' will NOT be downloaded, because processing has non recursive mode.");
+                                WriteLine($"Object '{o.Key}' will NOT be downloaded, because processing has non recursive mode.");
                                 return;
                             }
 
@@ -258,17 +263,17 @@ namespace AWSHelper
 
                             if(o.Key.EndsWith("/"))
                             {
-                                Console.WriteLine($"Found Directory, not a file: '{o.BucketName}/{o.Key}', no need to download, created direcory '{destination.Directory.FullName}'.");
+                                WriteLine($"Found Directory, not a file: '{o.BucketName}/{o.Key}', no need to download, created direcory '{destination.Directory.FullName}'.");
                                 return;
                             }
 
                             if (!destination.Directory.Exists)
                             {
-                                Console.WriteLine($"Creating missing directory '{destination.Directory.FullName}'...");
+                                WriteLine($"Creating missing directory '{destination.Directory.FullName}'...");
                                 destination.Directory.Create();
                             }
 
-                            Console.WriteLine($"Started Download '{bucket}/{o.Key}' -> '{destination?.FullName}'...");
+                            WriteLine($"Started Download '{bucket}/{o.Key}' -> '{destination?.FullName}'...");
 
                             var result = helper.DownloadObjectAsync(
                                 bucketName: bucket,
@@ -278,7 +283,7 @@ namespace AWSHelper
                                 outputFile: destination.FullName,
                                 @override: @override).Result;
 
-                            Console.WriteLine($"SUCCESS, File '{destination.FullName}' was saved.");
+                            WriteLine($"SUCCESS, File '{destination.FullName}' was saved.");
                         });
                     }
                     ; break;
@@ -290,7 +295,7 @@ namespace AWSHelper
 
                         var list = helper.ListObjectsAsync(bucket, prefix: path).Result;
 
-                        Console.WriteLine($"Found '{list.Length}' objects with '{path}' prefix in bucket '{bucket}'.");
+                        WriteLine($"Found '{list.Length}' objects with '{path}' prefix in bucket '{bucket}'.");
 
                         var rootPathCount = path.Trim('/').Count("/") + 1;
                         int counter = 0;
@@ -298,26 +303,26 @@ namespace AWSHelper
                         {
                             if (!recursive && o.Key.Trim('/').Count("/") > rootPathCount)
                             {
-                                Console.WriteLine($"Object '{o.Key}' will NOT be removed from bucket '{bucket}', due to NON recursive execution mode.");
+                                WriteLine($"Object '{o.Key}' will NOT be removed from bucket '{bucket}', due to NON recursive execution mode.");
                                 return;
                             }
 
-                            Console.WriteLine($"Removing '{o.Key}' from bucket '{bucket}'...");
+                            WriteLine($"Removing '{o.Key}' from bucket '{bucket}'...");
                             var success = helper.DeleteObjectAsync(bucketName: bucket, key: o.Key, throwOnFailure: true).Result;
                             ++counter;
-                            Console.WriteLine($"Sucesfully removed '{o.Key}' from bucket '{bucket}', response: {success}.");
+                            WriteLine($"Sucesfully removed '{o.Key}' from bucket '{bucket}', response: {success}.");
                         });
 
                         list = helper.ListObjectsAsync(bucket, prefix: path).Result;
                         if (list.IsNullOrEmpty() && helper.ObjectExistsAsync(bucket, key: path).Result)
                         {
-                            Console.WriteLine($"Removing root directory '{path}' from bucket '{bucket}'...");
+                            WriteLine($"Removing root directory '{path}' from bucket '{bucket}'...");
                             var success = helper.DeleteObjectAsync(bucketName: bucket, key: path, throwOnFailure: true).Result;
                             ++counter;
-                            Console.WriteLine($"Sucesfully removed root directory '{path}' from bucket '{bucket}', response: {success}.");
+                            WriteLine($"Sucesfully removed root directory '{path}' from bucket '{bucket}', response: {success}.");
                         }
 
-                        Console.WriteLine($"SUCCESS, removed {counter} files.");
+                        WriteLine($"SUCCESS, removed {counter} files.");
                     }
                     ; break;
                 case "hash-download":

@@ -10,7 +10,7 @@ namespace AWSHelper
 {
     public partial class Program
     {
-        private static void executeR53(string[] args)
+        private static async Task executeR53(string[] args)
         {
             var nArgs = CLIHelper.GetNamedArguments(args);
 
@@ -18,26 +18,51 @@ namespace AWSHelper
             switch (args[1])
             {
                 case "destroy-record":
-                    helper.DestroyRecord(
-                        zoneId: nArgs["zone"], 
-                        recordName: nArgs["name"], 
-                        recordType: nArgs["type"], 
-                        throwIfNotFound: nArgs.GetValueOrDefault("throw-if-not-foud").ToBoolOrDefault(true)).Wait();
+                    await helper.DestroyRecord(
+                        zoneId: nArgs["zone"],
+                        recordName: nArgs["name"],
+                        recordType: nArgs["type"],
+                        throwIfNotFound: nArgs.GetValueOrDefault("throw-if-not-foud").ToBoolOrDefault(true));
+                    ; break;
+                case "upsert-cname-record":
+                    {
+                       var result = await helper.UpsertCNameRecordAsync(
+                            zoneId: nArgs["zone"],
+                            name: nArgs["name"],
+                            value: nArgs["value"],
+                            ttl: nArgs.GetValueOrDefault("ttl").ToIntOrDefault(60),
+                            failover: nArgs.GetValueOrDefault("failover"),
+                            healthCheckId: nArgs.GetValueOrDefault("health-check-id"),
+                            setIdentifier: nArgs.GetValueOrDefault("set-identifier"));
+                        WriteLine($"SUCCESS, Result: '{result}'");
+                    }
+                    ; break;
+                case "upsert-a-record":
+                    {
+                        var result = await helper.UpsertARecordAsync(
+                             zoneId: nArgs["zone"],
+                             name: nArgs["name"],
+                             value: nArgs["value"],
+                             ttl: nArgs.GetValueOrDefault("ttl").ToIntOrDefault(60),
+                             failover: nArgs.GetValueOrDefault("failover"),
+                             healthCheckId: nArgs.GetValueOrDefault("health-check-id"),
+                             setIdentifier: nArgs.GetValueOrDefault("set-identifier"));
+                        WriteLine($"SUCCESS, Result: '{result}'");
+                    }
                     ; break;
                 case "get-record-sets":
                     {
-                        Console.WriteLine("Loading Route53 Record Sets...");
-                        var result = helper.GetRecordSets().Result;
-                        Console.WriteLine("SUCCESS, Result:");
+                        WriteLine("Loading Route53 Record Sets...");
+                        var result = await helper.GetRecordSets();
+                        WriteLine("SUCCESS, Result:");
                         Console.WriteLine(result.Select(x => (x.Key.Name, x.Value.Select(y => y))).JsonSerialize(Newtonsoft.Json.Formatting.Indented));
                     }
                     ; break;
                 case "list-resource-record-sets":
                     {
-                        Console.WriteLine("Loading Route53 Resource Record Sets...");
-                        var result = helper.ListResourceRecordSetsAsync(nArgs["zone"]).Result;
-
-                        Console.WriteLine("SUCCESS, Result:");
+                        WriteLine("Loading Route53 Resource Record Sets...");
+                        var result = await helper.ListResourceRecordSetsAsync(nArgs["zone"]);
+                        WriteLine("SUCCESS, Result:");
                         Console.WriteLine(result.JsonSerialize(Newtonsoft.Json.Formatting.Indented));
                     }
                     ; break;
@@ -49,7 +74,9 @@ namespace AWSHelper
                     HelpPrinter($"{args[0]}", "Amazon Route53",
                     ("destroy-record", "Accepts params: zone, name, type, throw-if-not-foud (optional)"),
                     ("get-record-sets", "Accepts params: no params"),
-                    ("list-resource-record-sets", "Accepts params: zone"));
+                    ("list-resource-record-sets", "Accepts params: zone"),
+                    ("upsert-cname-record", "Accepts: zone, name, value, ttl (optional:60), failover (optional), health-check-id (optional), set-identifier (optional)"),
+                    ("upsert-a-record", "Accepts: zone, name, value, ttl (optional:60), failover (optional), health-check-id (optional), set-identifier (optional)"));
                     break;
                 default:
                     {
