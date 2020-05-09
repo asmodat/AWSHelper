@@ -159,10 +159,11 @@ namespace AWSHelper
                             key: nArgs["path"],
                             eTag: nArgs.GetValueOrDefault("etag"),
                             version: nArgs.GetValueOrDefault("version"),
+                            throwIfNotFound: nArgs.GetValueOrDefault("throw-if-not-found").ToBoolOrDefault(true),
                             encoding: Encoding.UTF8);
 
                         WriteLine($"SUCCESS, Text Read, Bucket: {nArgs["bucket"]}, Path: {nArgs.GetValueOrDefault("path")}, Version: {nArgs.GetValueOrDefault("version")}, eTag: {nArgs.GetValueOrDefault("etag")}, Read: {result?.Length ?? 0} [characters], Result:");
-                        Console.WriteLine(result);
+                        Console.WriteLine(result ?? "");
                     }
                     ; break;
                 case "delete-object":
@@ -172,13 +173,12 @@ namespace AWSHelper
                         var result = await helper.DeleteVersionedObjectAsync(
                             bucketName: bucket,
                             key: path,
-                            throwOnFailure: true);
+                            throwOnFailure: nArgs.GetValueOrDefault("throw-on-failure").ToBoolOrDefault(true));
 
                         if (!result && nArgs.GetValueOrDefault("throw-if-not-deleted").ToBoolOrDefault(false))
                             throw new Exception($"File was NOT deleted, Bucket: {bucket}, Path: {path}");
 
                         WriteLine($"SUCCESS, Text Read, Bucket: {bucket}, Path: {path}, Deleted: '{(result ? "true" : "false")}'");
-                        Console.Write(result);
                     }
                     ; break;
                 case "object-exists":
