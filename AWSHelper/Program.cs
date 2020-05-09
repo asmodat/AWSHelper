@@ -14,7 +14,7 @@ namespace AWSHelper
 {
     public partial class Program
     {
-        private static readonly string _version = "0.12.1";
+        private static readonly string _version = "0.12.3";
         private static bool _silent = false;
 
         public static void WriteLine(string s)

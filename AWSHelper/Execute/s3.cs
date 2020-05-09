@@ -92,7 +92,7 @@ namespace AWSHelper
                         int uploadedFiles = 0;
                         int uploadedDirectories = 0;
 
-                        Console.WriteLine("Uploading Files...");
+                        WriteLine("Uploading Files...");
                         files.ParallelForEach(file =>
                         {
                             if(excludeFiles.Any(x => x.FullName == file.FullName) || excludeDirectories.Any(x => file.HasSubDirectory(x)))
@@ -154,12 +154,12 @@ namespace AWSHelper
                     ; break;
                 case "download-text":
                     {
-                        var result = helper.DownloadTextAsync(
+                        var result = await helper.DownloadTextAsync(
                             bucketName: nArgs["bucket"],
                             key: nArgs["path"],
                             eTag: nArgs.GetValueOrDefault("etag"),
                             version: nArgs.GetValueOrDefault("version"),
-                            encoding: Encoding.UTF8).Result;
+                            encoding: Encoding.UTF8);
 
                         WriteLine($"SUCCESS, Text Read, Bucket: {nArgs["bucket"]}, Path: {nArgs.GetValueOrDefault("path")}, Version: {nArgs.GetValueOrDefault("version")}, eTag: {nArgs.GetValueOrDefault("etag")}, Read: {result?.Length ?? 0} [characters], Result:");
                         Console.WriteLine(result);
@@ -169,10 +169,10 @@ namespace AWSHelper
                     {
                         var bucket = nArgs["bucket"];
                         var path = nArgs["path"];
-                        var result = helper.DeleteVersionedObjectAsync(
+                        var result = await helper.DeleteVersionedObjectAsync(
                             bucketName: bucket,
                             key: path,
-                            throwOnFailure: true).Result;
+                            throwOnFailure: true);
 
                         if (!result && nArgs.GetValueOrDefault("throw-if-not-deleted").ToBoolOrDefault(false))
                             throw new Exception($"File was NOT deleted, Bucket: {bucket}, Path: {path}");
@@ -183,14 +183,17 @@ namespace AWSHelper
                     ; break;
                 case "object-exists":
                     {
-                        var exists = helper.ObjectExistsAsync(
+                        var throwIfNotFound = nArgs.GetValueOrDefault("throw-if-not-found").ToBoolOrDefault(false);
+                        var exists = await helper.ObjectExistsAsync(
                             bucketName: nArgs["bucket"],
-                            key: nArgs["path"]).Result;
+                            key: nArgs["path"]);
 
-                        if (!exists && nArgs.GetValueOrDefault("throw-if-not-found").ToBoolOrDefault(false))
+                        if (!exists && throwIfNotFound)
                             throw new Exception($"File Does NOT exists, Bucket: {nArgs["bucket"]}, Path: {nArgs["path"]}");
 
                         WriteLine($"SUCCESS, Object Exists Check, Bucket: {nArgs["bucket"]}, Path: {nArgs["path"]}, Exists: {(exists ? "true" : "false")}");
+                        if (!throwIfNotFound)
+                            Console.WriteLine(exists);
                     }
                     ; break;
                 case "download-object":
@@ -204,13 +207,13 @@ namespace AWSHelper
 
                         WriteLine($"Started Download '{bucket}' -> '{output}'...");
 
-                        var result = helper.DownloadObjectAsync(
+                        var result = await helper.DownloadObjectAsync(
                             bucketName: nArgs["bucket"],
                             key: path,
                             eTag: nArgs.GetValueOrDefault("etag"),
                             version: nArgs.GetValueOrDefault("version"),
                             outputFile: output,
-                            @override: nArgs.GetValueOrDefault("override").ToBoolOrDefault(false)).Result;
+                            @override: nArgs.GetValueOrDefault("override").ToBoolOrDefault(false));
 
                         WriteLine($"SUCCESS, Text Read, Bucket: {bucket}, Path: {path}, Version: {nArgs.GetValueOrDefault("version")}, eTag: {nArgs.GetValueOrDefault("etag")}, Read: {result?.Length ?? 0} [B], Result: {result}");
                     }
@@ -293,7 +296,7 @@ namespace AWSHelper
                         var path = nArgs["path"].Trim('/') + "/";
                         var recursive = nArgs.GetValueOrDefault("recursive").ToBoolOrDefault(false);
 
-                        var list = helper.ListObjectsAsync(bucket, prefix: path).Result;
+                        var list = await helper.ListObjectsAsync(bucket, prefix: path);
 
                         WriteLine($"Found '{list.Length}' objects with '{path}' prefix in bucket '{bucket}'.");
 
@@ -313,11 +316,11 @@ namespace AWSHelper
                             WriteLine($"Sucesfully removed '{o.Key}' from bucket '{bucket}', response: {success}.");
                         });
 
-                        list = helper.ListObjectsAsync(bucket, prefix: path).Result;
-                        if (list.IsNullOrEmpty() && helper.ObjectExistsAsync(bucket, key: path).Result)
+                        list = await helper.ListObjectsAsync(bucket, prefix: path);
+                        if (list.IsNullOrEmpty() && await helper.ObjectExistsAsync(bucket, key: path))
                         {
                             WriteLine($"Removing root directory '{path}' from bucket '{bucket}'...");
-                            var success = helper.DeleteObjectAsync(bucketName: bucket, key: path, throwOnFailure: true).Result;
+                            var success = await helper.DeleteObjectAsync(bucketName: bucket, key: path, throwOnFailure: true);
                             ++counter;
                             WriteLine($"Sucesfully removed root directory '{path}' from bucket '{bucket}', response: {success}.");
                         }
