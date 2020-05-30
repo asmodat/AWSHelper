@@ -26,7 +26,6 @@ namespace AWSHelper
                         var name = nArgs["name"];
                         var key = nArgs.GetValueOrDefault("key", null);
                         var output = nArgs["output"]?.ToFileInfo();
-                        var silent = nArgs["silent"].ToBoolOrDefault(true);
                         var force = nArgs["force"].ToBoolOrDefault(false);
 
                         if (!(output?.Directory).TryCreate())
@@ -39,8 +38,7 @@ namespace AWSHelper
 
                         output.WriteAllText(result);
 
-                        if (!_silent)
-                            Console.WriteLine($"{result ?? "undefined"}");
+                        WriteLine($"{result ?? "undefined"}");
 
                         return true;
                     }

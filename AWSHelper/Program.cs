@@ -14,13 +14,19 @@ namespace AWSHelper
 {
     public partial class Program
     {
-        private static readonly string _version = "0.12.3";
+        private static readonly string _version = "0.12.4";
         private static bool _silent = false;
 
         public static void WriteLine(string s)
         {
             if (!_silent)
                 Console.WriteLine(s);
+        }
+
+        public static void Write(string s)
+        {
+            if (!_silent)
+                Console.Write(s);
         }
 
         static async Task Main(string[] args)
@@ -167,7 +173,7 @@ namespace AWSHelper
                     await executeS3(args, credentials);
                     break;
                 case "kms":
-                    executeKMS(args, credentials);
+                    await executeKMS(args, credentials);
                     break;
                 case "sm":
                     await executeSM(args, credentials);
@@ -176,7 +182,7 @@ namespace AWSHelper
                     executeFargate(args, credentials);
                     break;
                 case "test":
-                    executeCURL(args);
+                    await executeCURL(args);
                     break;
                 case "version":
                 case "ver":

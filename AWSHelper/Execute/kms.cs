@@ -4,12 +4,13 @@ using System.Linq;
 using AsmodatStandard.IO;
 using AWSWrapper.KMS;
 using Amazon.SecurityToken.Model;
+using System.Threading.Tasks;
 
 namespace AWSHelper
 {
     public partial class Program
     {
-        private static void executeKMS(string[] args, Credentials credentials)
+        private static async Task executeKMS(string[] args, Credentials credentials)
         {
             var nArgs = CLIHelper.GetNamedArguments(args);
             var helper = new KMSHelper(credentials);
@@ -18,9 +19,9 @@ namespace AWSHelper
             {
                 case "list-grants":
                     {
-                        var result = helper.GetGrantsByKeyNameAsync(
+                        var result = await helper.GetGrantsByKeyNameAsync(
                          keyName: nArgs["key"],
-                         grantName: nArgs["name"]).Result;
+                         grantName: nArgs["name"]);
 
                         Console.WriteLine($"{result.JsonSerialize(Newtonsoft.Json.Formatting.Indented)}");
                     }
@@ -30,20 +31,20 @@ namespace AWSHelper
                         var grants = nArgs["grants"].Split(',').Where(x => !x.IsNullOrWhitespace()).ToEnum<KMSHelper.GrantType>();
                         var grant = grants.Aggregate((a, b) => a | b);
 
-                        var result = helper.CreateRoleGrantByName(
+                        var result = await helper.CreateRoleGrantByName(
                          keyName: nArgs["key"],
                          grantName: nArgs["name"],
                          roleName: nArgs["role"],
-                         grant: grant).Result;
+                         grant: grant);
 
                         Console.WriteLine($"SUCCESS, grant '{nArgs["name"]}' of key '{nArgs["key"]}' for role '{nArgs["role"]}' was created with privileges: '{grants.Select(x => x.ToString()).JsonSerialize()}'.");
                     }
                     ; break;
                 case "remove-grant":
                     {
-                        var result = helper.RemoveGrantsByName(
+                        var result = await helper.RemoveGrantsByName(
                          keyName: nArgs["key"],
-                         grantName: nArgs["name"]).Result;
+                         grantName: nArgs["name"]);
 
                         Console.WriteLine($"SUCCESS, {result?.Length ?? 0} grant/s with name '{nArgs["name"]}' of key '{nArgs["key"]}' were removed.");
                     }
